@@ -5,13 +5,16 @@ import gx
 import time
 import os
 import math
+import fen_utils
+import figure_kind
+import board
 
 struct App {
 	mut:
 	gg           &gg.Context = unsafe { nil }
 	touch        TouchInfo
 	ui           Ui
-	board        Board
+	board        board.Board
 	undo         []Undo
 	atickers     [5][5]int
 	moves        int
@@ -56,12 +59,9 @@ struct Pos {
 	y int = -1
 }
 
-struct Board {
-	mut: field [8][8]FigureKind
-}
 
 struct Undo {
-	board Board
+	board board.Board
 }
 
 struct TouchInfo {
@@ -76,52 +76,61 @@ struct Touch {
 	time time.Time
 }
 
-enum FigureKind {
-	nothing
-	pawn_white
-	pawn_black
-	knight_white
-	knight_black
-	bishop_white
-	bishop_black
-	rook_white
-	rook_black
-	queen_white
-	queen_black
-	king_white
-	king_black
+fn xy2chessboard (x int, y int) string {
+	mut final_cord := ''
+	final_cord += match x {
+		0 {'a'}
+		1 {'b'}
+		2 {'c'}
+		3 {'d'}
+		4 {'e'}
+		5 {'f'}
+		6 {'g'}
+		7 {'h'}
+		else {''}
+	}
+	final_cord += (y + 1).str()
+	return final_cord
 }
 
 fn (mut app App) new_game() {
-	app.board = Board{}
+	app.board = board.Board{}
+	app.board.is_white_move = true
+	app.board.black_short_castle_allowed = true
+	app.board.black_long_castle_allowed = true
+	app.board.white_long_castle_allowed = true
+	app.board.white_short_castle_allowed = true
+	app.board.last_en_passant = '-'
+	app.board.halfmove_clock = 0
+	app.board.fullmove_number = 1
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
 			if y == 0 {
 				app.board.field[y][x] = match x {
-					0 {FigureKind.rook_black}
-					1 {FigureKind.knight_black}
-					2 {FigureKind.bishop_black}
-					3 {FigureKind.queen_black}
-					4 {FigureKind.king_black}
-					5 {FigureKind.bishop_black}
-					6 {FigureKind.knight_black}
-					7 {FigureKind.rook_black}
-					else {FigureKind.nothing}
+					0 {figure_kind.FigureKind.rook_black}
+					1 {figure_kind.FigureKind.knight_black}
+					2 {figure_kind.FigureKind.bishop_black}
+					3 {figure_kind.FigureKind.queen_black}
+					4 {figure_kind.FigureKind.king_black}
+					5 {figure_kind.FigureKind.bishop_black}
+					6 {figure_kind.FigureKind.knight_black}
+					7 {figure_kind.FigureKind.rook_black}
+					else {figure_kind.FigureKind.nothing}
 				}
 			}
-			if y == 1 { app.board.field[y][x] = FigureKind.pawn_black }
-			if y == 6 { app.board.field[y][x] = FigureKind.pawn_white }
+			if y == 1 { app.board.field[y][x] = figure_kind.FigureKind.pawn_black }
+			if y == 6 { app.board.field[y][x] = figure_kind.FigureKind.pawn_white }
 			if y == 7 {
 				app.board.field[y][x] = match x {
-					0 {FigureKind.rook_white}
-					1 {FigureKind.knight_white}
-					2 {FigureKind.bishop_white}
-					3 {FigureKind.king_white}
-					4 {FigureKind.queen_white}
-					5 {FigureKind.bishop_white}
-					6 {FigureKind.knight_white}
-					7 {FigureKind.rook_white}
-					else {FigureKind.nothing}
+					0 {figure_kind.FigureKind.rook_white}
+					1 {figure_kind.FigureKind.knight_white}
+					2 {figure_kind.FigureKind.bishop_white}
+					3 {figure_kind.FigureKind.queen_white}
+					4 {figure_kind.FigureKind.king_white}
+					5 {figure_kind.FigureKind.bishop_white}
+					6 {figure_kind.FigureKind.knight_white}
+					7 {figure_kind.FigureKind.rook_white}
+					else {figure_kind.FigureKind.nothing}
 				}
 			}
 		}
@@ -170,7 +179,7 @@ fn (mut app App) handle_swipe() {
 	dmax := if math.max(adx, ady) > 0 { math.max(adx, ady) } else { 1 }
 	tdiff := int(e.time.unix_time_milli() - s.time.unix_time_milli())
 	min_swipe_distance := int(math.sqrt(math.min(w, h) * tdiff / 100)) + 20
-	if dmax < min_swipe_distance || dmax / dmin < 2 {
+	if dmax < min_swipe_distance {
 		return
 	}
 	/*
@@ -304,7 +313,6 @@ fn (app &App) draw() {
 	mut xcord := 0
 	mut ycord := 0
 	mut is_dark := true
-	mut piece := app.rook_white
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
 			app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {tile_dark} else {tile_light})
@@ -324,6 +332,7 @@ fn (app &App) draw() {
 				.queen_black {app.gg.draw_image(xcord, ycord, w, h, app.queen_black)}
 				else {}
 			}
+			app.gg.draw_text_def(xcord, ycord, "${x}, ${y}")
 			xcord += w
 			is_dark = !is_dark
 
@@ -332,6 +341,7 @@ fn (app &App) draw() {
 		xcord = 0
 		ycord += h
 	}
+	//println(fen_utils.board_2_fen(app.board))
 }
 
 fn main() {
@@ -341,6 +351,7 @@ fn main() {
 	mut app := &App{}
 	app.new_game()
 	app.print_field()
+	fen_utils.fen_2_board(mut app.board, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
 	font_path := $if android {'fonts/RobotoMono-Regular.ttf'} $else {os.resource_abs_path('assets/fonts/RobotoMono-Regular.ttf')}
 	app.gg = gg.new_context(
 		bg_color: gx.rgb(22, 21, 18)
