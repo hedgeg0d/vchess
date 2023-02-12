@@ -136,14 +136,22 @@ pub fn board_2_fen(board_ board.Board) string{
 }
 
 pub fn fen_2_board (mut board_ board.Board, fen string) {
-	board_.clear()
 	mut fen_parts := fen.split('/')
 	tmp := fen_parts[7]
 	fen_parts.delete(7)
 
+
 	for i in tmp.split(' ') {
 		fen_parts.insert(fen_parts.len, i)
 	}
+
+	if fen_parts.len < 12 {
+		println('Invalid FEN')
+		return
+	}
+
+	println(fen_parts)
+	board_.clear()
 
 	mut y := u8(0)
 	mut x := u8(0)
@@ -173,4 +181,14 @@ pub fn fen_2_board (mut board_ board.Board, fen string) {
 		x = 0
 		y++
 	}
+
+	if fen_parts[8] == 'w' {board_.is_white_move = true} else {board_.is_white_move = false}
+	tmp_parts := fen_parts[9].split('')
+	if 'k' in tmp_parts {board_.black_short_castle_allowed = true} else {board_.black_short_castle_allowed = false}
+	if 'q' in tmp_parts {board_.black_long_castle_allowed = true} else {board_.black_long_castle_allowed = false}
+	if 'K' in tmp_parts {board_.white_short_castle_allowed = true} else {board_.white_short_castle_allowed = false}
+	if 'Q' in tmp_parts {board_.white_long_castle_allowed = true} else {board_.white_long_castle_allowed = false}
+	board_.last_en_passant = fen_parts[10]
+	board_.halfmove_clock = fen_parts[11].u16()
+	board_.fullmove_number = fen[12]
 }
