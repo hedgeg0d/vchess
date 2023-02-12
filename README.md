@@ -1,7 +1,7 @@
 # vchess
 Chess game written in V programming language(in development)
 
-You need Vlang installed to play
+You need Vlang installed to play: https//vlang.io
 
 to build use:
 ```v .```
