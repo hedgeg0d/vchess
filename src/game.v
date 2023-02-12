@@ -351,7 +351,7 @@ fn main() {
 	mut app := &App{}
 	app.new_game()
 	app.print_field()
-	fen_utils.fen_2_board(mut app.board, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+	fen_utils.fen_2_board(mut app.board, 'r1bqkb1r/pppppppp/5n2/1n4B1/3PQ3/6N1/PPP1PPPP/RN2KB1R b KQkq - 0 1')
 	font_path := $if android {'fonts/RobotoMono-Regular.ttf'} $else {os.resource_abs_path('assets/fonts/RobotoMono-Regular.ttf')}
 	app.gg = gg.new_context(
 		bg_color: gx.rgb(22, 21, 18)

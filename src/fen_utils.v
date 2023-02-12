@@ -174,7 +174,15 @@ pub fn fen_2_board (mut board_ board.Board, fen string) {
 				'r' {board_.field[y][x] = .rook_black}
 				'q' {board_.field[y][x] = .queen_black}
 				'k' {board_.field[y][x] = .king_black}
-				else{x = j.u8() - 2}
+				else{
+					val := j.u8()
+					match val {
+						1 {}
+						2 {x++}
+						3 ... 7 {x += (val - 1)}
+						else {}
+					}
+				}
 			}
 			x++
 		}
