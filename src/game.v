@@ -8,6 +8,7 @@ import math
 import fen_utils
 import figure_kind
 import board
+import cords
 
 struct App {
 	mut:
@@ -30,6 +31,7 @@ struct App {
 	rook_black   gg.Image
 	queen_black  gg.Image
 	king_black   gg.Image
+	current_tile string
 }
 
 struct Ui {
@@ -76,22 +78,6 @@ struct Touch {
 	time time.Time
 }
 
-fn xy2chessboard (x int, y int) string {
-	mut final_cord := ''
-	final_cord += match x {
-		0 {'a'}
-		1 {'b'}
-		2 {'c'}
-		3 {'d'}
-		4 {'e'}
-		5 {'f'}
-		6 {'g'}
-		7 {'h'}
-		else {''}
-	}
-	final_cord += (y + 1).str()
-	return final_cord
-}
 
 fn (mut app App) new_game() {
 	app.board = board.Board{}
@@ -103,6 +89,7 @@ fn (mut app App) new_game() {
 	app.board.last_en_passant = '-'
 	app.board.halfmove_clock = 0
 	app.board.fullmove_number = 1
+	app.current_tile = '-'
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
 			if y == 0 {
@@ -215,9 +202,22 @@ fn (mut app App) handle_tap() {
 	m := math.min(w, h)
 	s, e := app.touch.start, app.touch.end
 	avgx, avgy := avg(s.pos.x, e.pos.x), avg(s.pos.y, e.pos.y)
-	/*if avgx < 80 && h - avgy < 80 {
-		app.next_theme()
-	}*/
+
+	tilex := (avgy / (h / 8))
+	tiley := (avgx / (w / 8))
+	//debug
+	println(app.board.field[tilex][tiley])
+	println('${tilex}, ${tiley}')
+	println(cords.xy2chessboard(tilex, tiley))
+	println(cords.chessboard2xy(cords.xy2chessboard(tilex, tiley)))
+
+	if app.current_tile == '-' {
+		app.current_tile = cords.xy2chessboard(tilex, tiley)
+	} else {
+		oldcord := cords.chessboard2xy(app.current_tile)
+		app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
+		app.current_tile = '-'
+	}
 }
 
 fn on_event(e &gg.Event, mut app App) {
@@ -351,7 +351,7 @@ fn main() {
 	mut app := &App{}
 	app.new_game()
 	app.print_field()
-	fen_utils.fen_2_board(mut app.board, 'r1bqkb1r/pppppppp/5n2/1n4B1/3PQ3/6N1/PPP1PPPP/RN2KB1R b KQkq - 0 1')
+	//fen_utils.fen_2_board(mut app.board, 'r3kb1r/ppp1pppp/2nqb3/3p1n2/3P1B2/5N2/PPP1PPPP/RNQ1KB1R b KQkq - 0 1')
 	font_path := $if android {'fonts/RobotoMono-Regular.ttf'} $else {os.resource_abs_path('assets/fonts/RobotoMono-Regular.ttf')}
 	app.gg = gg.new_context(
 		bg_color: gx.rgb(22, 21, 18)

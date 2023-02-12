@@ -22,3 +22,10 @@ pub fn (mut board Board) clear () {
 		}
 	}
 }
+
+pub fn (mut board Board) swap (x1 int, y1 int, x2 int, y2 int) {
+	tile1 := board.field[x1][y1]
+	tile2 := board.field[x2][y2]
+	board.field[x1][y1] = tile2
+	board.field[x2][y2] = tile1
+}
