@@ -49,12 +49,13 @@ struct Ui {
 }
 
 const (
-	window_title= "VChess"
+    window_title = "VChess"
 	window_width= 800
-	window_height= 600
+	window_height= 800
 	tile_light = gx.rgb(135, 157, 180)
 	tile_dark = gx.rgb(97, 120, 141)
-	highlighted = gx.rgb(72, 117, 110)
+	highlighted_light = gx.rgb(72, 117, 110)
+	highlighted_dark = gx.rgb(57, 100, 94)
 )
 
 struct Pos {
@@ -91,6 +92,7 @@ fn (mut app App) new_game() {
 	app.board.halfmove_clock = 0
 	app.board.fullmove_number = 1
 	app.board.current_fen = ''
+	app.board.highlighted_tiles = []
 	app.current_tile = '-'
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
@@ -133,6 +135,11 @@ fn avg(a int, b int) int {
 	return (a + b) / 2
 }
 
+[inline]
+pub fn is_valid(pos []int) bool{
+	return pos[0] >= 0 && pos[0] < 8 && pos[1] >= 0 && pos[1] < 8
+}
+
 fn (mut app App) resize() {
 	mut s := app.gg.scale
 	if s == 0.0 {s = 1.0}
@@ -170,6 +177,7 @@ fn (mut app App) handle_swipe() {
 		return
 	}
 	/*
+	DO NOT DELETE. this is an example how to add swipe actions:
 	if adx > ady {
 		if dx < 0 {
 			app.move(.left)
@@ -211,16 +219,41 @@ fn (mut app App) handle_tap() {
 	println(cords.xy2chessboard(tilex, tiley))
 	println(cords.chessboard2xy(cords.xy2chessboard(tilex, tiley)))
 
+
+	mut allowed := [[0]]
+	allowed.clear()
+	for i in app.board.highlighted_tiles {
+		pos := cords.chessboard2xy(i)
+		if is_valid(pos) && (app.board.field[pos[0]][pos[1]] == .nothing ||
+		app.board.field[cords.chessboard2xy(app.current_tile)[0]][cords.chessboard2xy(app.current_tile)[1]].is_enemy(app.board.field[pos[0]][pos[1]])) {
+			allowed.insert(0, pos)
+		}
+	}
+
+
+
 	if app.current_tile == '-'{
 		if app.board.field[tilex][tiley] != .nothing{
-			app.current_tile = cords.xy2chessboard(tilex, tiley)
+			if app.board.is_white_move == app.board.field[tilex][tiley].is_white() {
+				app.current_tile = cords.xy2chessboard(tilex, tiley)
+				app.board.highlighted_tiles.insert(0, app.board.allowed_moves(tilex, tiley))
+			}
 		}
 	} else {
 		oldcord := cords.chessboard2xy(app.current_tile)
-		app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
-		app.current_tile = '-'
-		app.board.current_fen = fen_utils.board_2_fen(app.board)
-		println(app.board.current_fen)
+		if oldcord[0] == tilex && oldcord[1] == tiley {
+			app.current_tile = '-'
+			app.board.highlighted_tiles.clear()
+			return
+		}
+		if [tilex, tiley] in allowed {
+			app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
+			app.current_tile = '-'
+			app.board.current_fen = fen_utils.board_2_fen(app.board)
+			app.board.is_white_move = !app.board.is_white_move
+			println(app.board.current_fen)
+			app.board.highlighted_tiles.clear()
+		}
 	}
 }
 
@@ -316,13 +349,20 @@ fn (app &App) draw() {
 	h := app.ui.window_height / 8
 	mut xcord := 0
 	mut ycord := 0
-	mut is_dark := true
+	mut higlighted_l := [[0]]
+	higlighted_l.clear()
+	for i in app.board.highlighted_tiles {
+		higlighted_l.insert(0, cords.chessboard2xy(i))
+	}
+	mut is_dark := false
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
 			if app.current_tile != '-' && ([y, x] == cords.chessboard2xy(app.current_tile)) {
-				app.gg.draw_rect_filled(xcord, ycord, w, h, highlighted)
+				app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {highlighted_dark} else {highlighted_light})
 			} else {
-				app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {tile_dark} else {tile_light})
+				if [y, x] in higlighted_l {app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {highlighted_dark} else {highlighted_light})} else {
+					app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {tile_dark} else {tile_light})
+				}
 			}
 			match app.board.field[y][x] {
 				.pawn_white {app.gg.draw_image(xcord, ycord, w, h, app.pawn_white)}
@@ -356,6 +396,7 @@ fn main() {
 	$if android{
 		os.chdir('/storage/emulated/0/Android/data/com.hedgegod.chessgame')!
 	}
+	curves_quality := $if android {4} $else {10}
 	mut app := &App{}
 	app.new_game()
 	app.print_field()
@@ -365,7 +406,7 @@ fn main() {
 		bg_color: gx.rgb(22, 21, 18)
 		width: window_width
 		height: window_height
-		sample_count: 4
+		sample_count: curves_quality
 		create_window: true
 		window_title: window_title
 		font_path: font_path

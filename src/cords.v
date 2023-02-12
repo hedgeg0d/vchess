@@ -11,7 +11,7 @@ pub fn xy2chessboard (x int, y int) string {
 		5 {'f'}
 		6 {'g'}
 		7 {'h'}
-		else {''}
+		else {' '}
 	}
 	final_cord += (9 - (x + 1)).str()
 	return final_cord
