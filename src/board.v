@@ -13,6 +13,7 @@ pub struct Board {
 	last_en_passant				string
 	halfmove_clock				u16
 	fullmove_number				u16
+	current_fen   				string
 }
 
 pub fn (mut board Board) clear () {

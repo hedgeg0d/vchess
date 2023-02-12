@@ -54,6 +54,7 @@ const (
 	window_height= 600
 	tile_light = gx.rgb(135, 157, 180)
 	tile_dark = gx.rgb(97, 120, 141)
+	highlighted = gx.rgb(72, 117, 110)
 )
 
 struct Pos {
@@ -89,6 +90,7 @@ fn (mut app App) new_game() {
 	app.board.last_en_passant = '-'
 	app.board.halfmove_clock = 0
 	app.board.fullmove_number = 1
+	app.board.current_fen = ''
 	app.current_tile = '-'
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
@@ -133,9 +135,7 @@ fn avg(a int, b int) int {
 
 fn (mut app App) resize() {
 	mut s := app.gg.scale
-	if s == 0.0 {
-		s = 1.0
-	}
+	if s == 0.0 {s = 1.0}
 	real_window_size := app.gg.window_size()
 	w := real_window_size.width
 	h := real_window_size.height
@@ -211,12 +211,16 @@ fn (mut app App) handle_tap() {
 	println(cords.xy2chessboard(tilex, tiley))
 	println(cords.chessboard2xy(cords.xy2chessboard(tilex, tiley)))
 
-	if app.current_tile == '-' {
-		app.current_tile = cords.xy2chessboard(tilex, tiley)
+	if app.current_tile == '-'{
+		if app.board.field[tilex][tiley] != .nothing{
+			app.current_tile = cords.xy2chessboard(tilex, tiley)
+		}
 	} else {
 		oldcord := cords.chessboard2xy(app.current_tile)
 		app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
 		app.current_tile = '-'
+		app.board.current_fen = fen_utils.board_2_fen(app.board)
+		println(app.board.current_fen)
 	}
 }
 
@@ -315,7 +319,11 @@ fn (app &App) draw() {
 	mut is_dark := true
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
-			app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {tile_dark} else {tile_light})
+			if app.current_tile != '-' && ([y, x] == cords.chessboard2xy(app.current_tile)) {
+				app.gg.draw_rect_filled(xcord, ycord, w, h, highlighted)
+			} else {
+				app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {tile_dark} else {tile_light})
+			}
 			match app.board.field[y][x] {
 				.pawn_white {app.gg.draw_image(xcord, ycord, w, h, app.pawn_white)}
 				.bishop_white {app.gg.draw_image(xcord, ycord, w, h, app.bishop_white)}

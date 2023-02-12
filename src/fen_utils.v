@@ -84,6 +84,7 @@ pub fn board_2_fen(board_ board.Board) string{
 			} else {
 				if empty_count > 0 {
 					final_fen += empty_count.str()
+					empty_count = 0
 				}
 				match piece {
 					.pawn_white {'P'}
@@ -104,8 +105,8 @@ pub fn board_2_fen(board_ board.Board) string{
 				}
 			}
 		}
-		if empty_count >= 7 {
-			final_fen += '8'
+		if empty_count > 0 {
+			final_fen += empty_count.str()
 		}
 		final_fen += '/'
 	}
@@ -118,10 +119,10 @@ pub fn board_2_fen(board_ board.Board) string{
 
 	final_fen += ' '
 
-	if white_long_castle_allowed {final_fen += 'Q'}
 	if white_short_castle_allowed {final_fen += 'K'}
-	if black_long_castle_allowed {final_fen += 'q'}
+	if white_long_castle_allowed {final_fen += 'Q'}
 	if black_short_castle_allowed {final_fen += 'k'}
+	if black_long_castle_allowed {final_fen += 'q'}
 	if !(white_short_castle_allowed || white_long_castle_allowed || black_long_castle_allowed || black_short_castle_allowed) {
 		final_fen += '-'
 	}
