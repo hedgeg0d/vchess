@@ -18,9 +18,7 @@ pub struct Board {
 
 pub fn (mut board Board) clear () {
 	for y in 0 .. 8 {
-		for x in 0 .. 8 {
-			board.field[y][x] = .nothing
-		}
+		for x in 0 .. 8 {board.field[y][x] = .nothing}
 	}
 }
 
