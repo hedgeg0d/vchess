@@ -16,7 +16,7 @@ struct App {
 	touch        TouchInfo
 	ui           Ui
 	board        board.Board
-	undo         []Undo
+	undo         []string
 	atickers     [5][5]int
 	moves        int
 	pawn_white   gg.Image
@@ -63,11 +63,6 @@ struct Pos {
 	y int = -1
 }
 
-
-struct Undo {
-	board board.Board
-}
-
 struct TouchInfo {
 	mut:
 	start Touch
@@ -93,6 +88,7 @@ fn (mut app App) new_game() {
 	app.board.fullmove_number = 1
 	app.board.current_fen = ''
 	app.board.highlighted_tiles = []
+	app.board.is_first_move = true
 	app.current_tile = '-'
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
@@ -126,8 +122,15 @@ fn (mut app App) new_game() {
 			}
 		}
 	}
-	app.undo = []Undo{cap: 4096}
+	app.undo = []string{cap: 4096}
 	app.moves = 0
+}
+
+[inline]
+pub fn (mut app App) undo_move() {
+	if app.undo.len < 1 {return}
+	fen_utils.fen_2_board(mut app.board, app.undo.last())
+	app.undo.delete_last()
 }
 
 [inline]
@@ -189,7 +192,13 @@ fn (mut app App) handle_swipe() {
 
 fn (mut app App) on_key_down(key gg.KeyCode) {
 	match key {
-		.c {  }
+		.backspace {
+			if app.undo.len == 0 {fen_utils.fen_2_board(mut app.board, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')} else {
+				fen_utils.fen_2_board(mut app.board, app.undo.last())
+				println('loaded ${app.undo.last()}')
+				app.undo.delete_last()
+			}
+		}
 		else {}
 	}
 }
@@ -214,11 +223,11 @@ fn (mut app App) handle_tap() {
 	tilex := (avgy / (h / 8))
 	tiley := (avgx / (w / 8))
 	//debug
-	println(app.board.field[tilex][tiley])
+	/*println(app.board.field[tilex][tiley])
 	println('${tilex}, ${tiley}')
 	println(cords.xy2chessboard(tilex, tiley))
 	println(cords.chessboard2xy(cords.xy2chessboard(tilex, tiley)))
-
+	*/
 
 	mut allowed := [[0]]
 	allowed.clear()
@@ -249,9 +258,12 @@ fn (mut app App) handle_tap() {
 		if [tilex, tiley] in allowed {
 			app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
 			app.current_tile = '-'
-			app.board.current_fen = fen_utils.board_2_fen(app.board)
+			if !app.board.is_white_move {app.board.fullmove_number++}
 			app.board.is_white_move = !app.board.is_white_move
-			println(app.board.current_fen)
+			app.board.current_fen = fen_utils.board_2_fen(app.board)
+			if !(app.board.fullmove_number == 1) {app.undo.insert(app.undo.len, app.board.current_fen)}
+			println(app.undo)
+			println(app.undo.len)
 			app.board.highlighted_tiles.clear()
 		}
 	}
@@ -400,7 +412,7 @@ fn main() {
 	mut app := &App{}
 	app.new_game()
 	app.print_field()
-	//fen_utils.fen_2_board(mut app.board, 'r3kb1r/ppp1pppp/2nqb3/3p1n2/3P1B2/5N2/PPP1PPPP/RNQ1KB1R b KQkq - 0 1')
+	//fen_utils.fen_2_board(mut app.board, 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1')
 	font_path := $if android {'fonts/RobotoMono-Regular.ttf'} $else {os.resource_abs_path('assets/fonts/RobotoMono-Regular.ttf')}
 	app.gg = gg.new_context(
 		bg_color: gx.rgb(22, 21, 18)

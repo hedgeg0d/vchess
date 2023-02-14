@@ -16,6 +16,7 @@ pub struct Board {
 	fullmove_number				u16
 	current_fen   				string
 	highlighted_tiles			[]string
+	is_first_move				bool
 }
 
 pub fn (mut board Board) clear () {

@@ -108,7 +108,9 @@ pub fn board_2_fen(board_ board.Board) string{
 		if empty_count > 0 {
 			final_fen += empty_count.str()
 		}
-		final_fen += '/'
+		if y < 7 {
+			final_fen += '/'
+		}
 	}
 
 	if is_white_move {
@@ -151,7 +153,6 @@ pub fn fen_2_board (mut board_ board.Board, fen string) {
 		return
 	}
 
-	println(fen_parts)
 	board_.clear()
 
 	mut y := u8(0)
