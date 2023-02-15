@@ -59,7 +59,20 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 			cords.xy2chessboard(x + 1, y + 2)
 			cords.xy2chessboard(x + 1, y - 2)
 			cords.xy2chessboard(x - 1, y + 2)
-			cords.xy2chessboard(x - 1, y -2)
+			cords.xy2chessboard(x - 1, y - 2)
+		]
+	}
+
+	if field.is_king() {
+		return [
+			cords.xy2chessboard(x + 1, y)
+			cords.xy2chessboard(x - 1, y)
+			cords.xy2chessboard(x, y + 1)
+			cords.xy2chessboard(x, y -1)
+			cords.xy2chessboard(x + 1, y + 1)
+			cords.xy2chessboard(x - 1, y + 1)
+			cords.xy2chessboard(x + 1, y - 1)
+			cords.xy2chessboard(x - 1, y - 1)
 		]
 	}
 	return []

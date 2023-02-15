@@ -236,6 +236,7 @@ fn (mut app App) handle_tap() {
 
 	if app.current_tile == '-'{
 		if app.board.field[tilex][tiley] != .nothing{
+			println(app.board.field[tilex][tiley])
 			if app.board.is_white_move == app.board.field[tilex][tiley].is_white() {
 				app.current_tile = cords.xy2chessboard(tilex, tiley)
 				app.board.highlighted_tiles.insert(0, app.board.allowed_moves(tilex, tiley))
@@ -363,9 +364,7 @@ fn (app &App) draw() {
 	mut ycord := 0
 	mut higlighted_l := [[0]]
 	higlighted_l.clear()
-	for i in app.board.highlighted_tiles {
-		higlighted_l.insert(0, cords.chessboard2xy(i))
-	}
+	for i in app.board.highlighted_tiles {higlighted_l.insert(0, cords.chessboard2xy(i))}
 	mut is_dark := false
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {

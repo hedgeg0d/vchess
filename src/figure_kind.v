@@ -16,7 +16,7 @@ pub enum FigureKind {
 	king_black
 }
 pub fn (figure FigureKind) is_white() bool {
-	white_pieces := [FigureKind.pawn_white, FigureKind.knight_white, FigureKind.bishop_white, FigureKind.rook_white, FigureKind.queen_white, FigureKind.knight_white]
+	white_pieces := [FigureKind.pawn_white, FigureKind.knight_white, FigureKind.bishop_white, FigureKind.rook_white, FigureKind.queen_white, FigureKind.king_white]
 
 	if figure == .nothing {return false}
 	return figure in white_pieces
