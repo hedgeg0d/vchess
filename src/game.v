@@ -195,7 +195,6 @@ fn (mut app App) on_key_down(key gg.KeyCode) {
 		.backspace {
 			if app.undo.len == 0 {fen_utils.fen_2_board(mut app.board, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')} else {
 				fen_utils.fen_2_board(mut app.board, app.undo.last())
-				println('loaded ${app.undo.last()}')
 				app.undo.delete_last()
 			}
 		}
@@ -222,12 +221,6 @@ fn (mut app App) handle_tap() {
 
 	tilex := (avgy / (h / 8))
 	tiley := (avgx / (w / 8))
-	//debug
-	/*println(app.board.field[tilex][tiley])
-	println('${tilex}, ${tiley}')
-	println(cords.xy2chessboard(tilex, tiley))
-	println(cords.chessboard2xy(cords.xy2chessboard(tilex, tiley)))
-	*/
 
 	mut allowed := [[0]]
 	allowed.clear()
@@ -249,6 +242,15 @@ fn (mut app App) handle_tap() {
 			}
 		}
 	} else {
+		if !([tilex, tiley] in allowed) {
+			if app.board.field[tilex][tiley] != .nothing && !(app.board.field[tilex][tiley].is_enemy(app.board.field[cords.chessboard2xy(app.current_tile)[0]][cords.chessboard2xy(app.current_tile)[1]])) {
+			app.current_tile = cords.xy2chessboard(tilex, tiley)
+			app.board.highlighted_tiles.clear()
+			app.board.highlighted_tiles.insert(0,app.board.allowed_moves(tilex, tiley))}
+			else {app.current_tile = '-'
+			app.board.highlighted_tiles.clear()}
+			return
+		}
 		oldcord := cords.chessboard2xy(app.current_tile)
 		if oldcord[0] == tilex && oldcord[1] == tiley {
 			app.current_tile = '-'
@@ -256,14 +258,12 @@ fn (mut app App) handle_tap() {
 			return
 		}
 		if [tilex, tiley] in allowed {
+			app.undo.insert(app.undo.len, fen_utils.board_2_fen(app.board))
 			app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
 			app.current_tile = '-'
 			if !app.board.is_white_move {app.board.fullmove_number++}
 			app.board.is_white_move = !app.board.is_white_move
 			app.board.current_fen = fen_utils.board_2_fen(app.board)
-			if !(app.board.fullmove_number == 1) {app.undo.insert(app.undo.len, app.board.current_fen)}
-			println(app.undo)
-			println(app.undo.len)
 			app.board.highlighted_tiles.clear()
 		}
 	}
