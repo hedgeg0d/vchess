@@ -372,7 +372,7 @@ fn (app &App) draw() {
 			if app.current_tile != '-' && ([y, x] == cords.chessboard2xy(app.current_tile)) {
 				app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {highlighted_dark} else {highlighted_light})
 			} else {
-				if [y, x] in higlighted_l {app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {highlighted_dark} else {highlighted_light})} else {
+				if [y, x] in higlighted_l && (app.board.field[y][x] == .nothing || app.board.field[cords.chessboard2xy(app.current_tile)[0]][cords.chessboard2xy(app.current_tile)[1]].is_enemy(app.board.field[y][x])) {app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {highlighted_dark} else {highlighted_light})} else {
 					app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {tile_dark} else {tile_light})
 				}
 			}
