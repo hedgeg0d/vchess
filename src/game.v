@@ -214,7 +214,12 @@ fn (mut app App) handle_touches() {
 
 fn (mut app App) handle_tap() {
 	_, ypad := app.ui.x_padding, app.ui.y_padding
-	w, h := app.ui.window_width, app.ui.window_height
+	mut w, mut h := app.ui.window_width, app.ui.window_height
+	if app.ui.window_height > app.ui.window_width {
+		w, h = app.ui.window_width , app.ui.window_width
+	} else {
+		w, h = app.ui.window_height, app.ui.window_height
+	}
 	m := math.min(w, h)
 	s, e := app.touch.start, app.touch.end
 	avgx, avgy := avg(s.pos.x, e.pos.x), avg(s.pos.y, e.pos.y)
@@ -236,7 +241,6 @@ fn (mut app App) handle_tap() {
 
 	if app.current_tile == '-'{
 		if app.board.field[tilex][tiley] != .nothing{
-			println(app.board.field[tilex][tiley])
 			if app.board.is_white_move == app.board.field[tilex][tiley].is_white() {
 				app.current_tile = cords.xy2chessboard(tilex, tiley)
 				app.board.highlighted_tiles.insert(0, app.board.allowed_moves(tilex, tiley))
@@ -327,19 +331,47 @@ fn on_event(e &gg.Event, mut app App) {
 }
 
 fn init_images(mut app App) {
-	app.pawn_white   = app.gg.create_image(os.resource_abs_path('assets/white/pawn.png'))
-	app.knight_white = app.gg.create_image(os.resource_abs_path('assets/white/knight.png'))
-	app.bishop_white = app.gg.create_image(os.resource_abs_path('assets/white/bishop.png'))
-	app.rook_white   = app.gg.create_image(os.resource_abs_path('assets/white/rook.png'))
-	app.queen_white  = app.gg.create_image(os.resource_abs_path('assets/white/queen.png'))
-	app.king_white   = app.gg.create_image(os.resource_abs_path('assets/white/king.png'))
+	app.resize()
+	$if android {
+		pawn_white := os.read_apk_asset('white/pawn.png') or {panic(err)}
+		knight_white := os.read_apk_asset('white/knight.png') or {panic(err)}
+		bishop_white := os.read_apk_asset('white/bishop.png') or {panic(err)}
+		rook_white := os.read_apk_asset('white/rook.png') or {panic(err)}
+		queen_white := os.read_apk_asset('white/queen.png') or {panic(err)}
+		king_white := os.read_apk_asset('white/king.png') or {panic(err)}
+		app.pawn_white = app.gg.create_image_from_byte_array(pawn_white)
+		app.knight_white = app.gg.create_image_from_byte_array(knight_white)
+		app.bishop_white = app.gg.create_image_from_byte_array(bishop_white)
+		app.rook_white = app.gg.create_image_from_byte_array(rook_white)
+		app.queen_white = app.gg.create_image_from_byte_array(queen_white)
+		app.king_white = app.gg.create_image_from_byte_array(king_white)
+		pawn_black := os.read_apk_asset('black/pawn.png') or {panic(err)}
+		knight_black := os.read_apk_asset('black/knight.png') or {panic(err)}
+		bishop_black := os.read_apk_asset('black/bishop.png') or {panic(err)}
+		rook_black := os.read_apk_asset('black/rook.png') or {panic(err)}
+		queen_black := os.read_apk_asset('black/queen.png') or {panic(err)}
+		king_black := os.read_apk_asset('black/pawn.png') or {panic(err)}
+		app.pawn_black = app.gg.create_image_from_byte_array(pawn_black)
+		app.knight_black = app.gg.create_image_from_byte_array(knight_black)
+		app.bishop_black = app.gg.create_image_from_byte_array(bishop_black)
+		app.rook_black = app.gg.create_image_from_byte_array(rook_black)
+		app.queen_black = app.gg.create_image_from_byte_array(queen_black)
+		app.king_black = app.gg.create_image_from_byte_array(king_black)
+	} $else {
+		app.pawn_white = app.gg.create_image(os.resource_abs_path('assets/white/pawn.png'))
+		app.knight_white = app.gg.create_image(os.resource_abs_path('assets/white/knight.png'))
+		app.bishop_white = app.gg.create_image(os.resource_abs_path('assets/white/bishop.png'))
+		app.rook_white = app.gg.create_image(os.resource_abs_path('assets/white/rook.png'))
+		app.queen_white = app.gg.create_image(os.resource_abs_path('assets/white/queen.png'))
+		app.king_white = app.gg.create_image(os.resource_abs_path('assets/white/king.png'))
 
-	app.pawn_black   = app.gg.create_image(os.resource_abs_path('assets/black/pawn.png'))
-	app.knight_black = app.gg.create_image(os.resource_abs_path('assets/black/knight.png'))
-	app.bishop_black = app.gg.create_image(os.resource_abs_path('assets/black/bishop.png'))
-	app.rook_black   = app.gg.create_image(os.resource_abs_path('assets/black/rook.png'))
-	app.queen_black  = app.gg.create_image(os.resource_abs_path('assets/black/queen.png'))
-	app.king_black   = app.gg.create_image(os.resource_abs_path('assets/black/king.png'))
+		app.pawn_black = app.gg.create_image(os.resource_abs_path('assets/black/pawn.png'))
+		app.knight_black = app.gg.create_image(os.resource_abs_path('assets/black/knight.png'))
+		app.bishop_black = app.gg.create_image(os.resource_abs_path('assets/black/bishop.png'))
+		app.rook_black = app.gg.create_image(os.resource_abs_path('assets/black/rook.png'))
+		app.queen_black = app.gg.create_image(os.resource_abs_path('assets/black/queen.png'))
+		app.king_black = app.gg.create_image(os.resource_abs_path('assets/black/king.png'))
+	}
 }
 
 fn (mut app App) print_field() {
@@ -358,8 +390,15 @@ fn frame(app &App) {
 }
 
 fn (app &App) draw() {
-	w := app.ui.window_width / 8
-	h := app.ui.window_height / 8
+	mut w := 0
+	mut h := 0
+	if app.ui.window_height > app.ui.window_width {
+		w, h = app.ui.window_width / 8, app.ui.window_width / 8
+	} else {
+		w, h = app.ui.window_height / 8, app.ui.window_height / 8
+	}
+	//w := app.ui.window_width / 8
+	//h := app.ui.window_height / 8
 	mut xcord := 0
 	mut ycord := 0
 	mut higlighted_l := [[0]]
@@ -391,7 +430,22 @@ fn (app &App) draw() {
 				.queen_black {app.gg.draw_image(xcord, ycord, w, h, app.queen_black)}
 				else {}
 			}
-			app.gg.draw_text_def(xcord, ycord, "${x}, ${y}")
+			if x == 0 {
+				app.gg.draw_text(xcord, ycord, "${8 - y}", gx.TextCfg {
+					color: if is_dark {tile_light} else {tile_dark}
+					size: app.ui.font_size / 3
+					align: .left
+					vertical_align: .top
+				})
+			}
+			if y == 7 {
+				app.gg.draw_text(xcord + w, ycord + h, '${cords.xy2chessboard(y, x)[0].ascii_str()}', gx.TextCfg {
+					color: if is_dark {tile_light} else {tile_dark}
+					size: app.ui.font_size / 3
+					align: .right
+					vertical_align: .bottom
+				})
+			}
 			xcord += w
 			is_dark = !is_dark
 
@@ -400,17 +454,16 @@ fn (app &App) draw() {
 		xcord = 0
 		ycord += h
 	}
-	//println(fen_utils.board_2_fen(app.board))
 }
 
 fn main() {
 	$if android{
 		os.chdir('/storage/emulated/0/Android/data/com.hedgegod.chessgame')!
 	}
-	curves_quality := $if android {4} $else {10}
+
+	curves_quality := 4
 	mut app := &App{}
 	app.new_game()
-	app.print_field()
 	//fen_utils.fen_2_board(mut app.board, 'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1')
 	font_path := $if android {'fonts/RobotoMono-Regular.ttf'} $else {os.resource_abs_path('assets/fonts/RobotoMono-Regular.ttf')}
 	app.gg = gg.new_context(
