@@ -75,5 +75,41 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 			cords.xy2chessboard(x - 1, y - 1)
 		]
 	}
+
+	if field.is_rook() {
+		return [
+			cords.xy2chessboard(x - 1, y)
+			cords.xy2chessboard(x - 2, y)
+			cords.xy2chessboard(x - 3, y)
+			cords.xy2chessboard(x - 4, y)
+			cords.xy2chessboard(x - 5, y)
+			cords.xy2chessboard(x - 6, y)
+			cords.xy2chessboard(x - 7, y)
+
+			cords.xy2chessboard(x + 1, y)
+			cords.xy2chessboard(x + 2, y)
+			cords.xy2chessboard(x + 3, y)
+			cords.xy2chessboard(x + 4, y)
+			cords.xy2chessboard(x + 5, y)
+			cords.xy2chessboard(x + 6, y)
+			cords.xy2chessboard(x + 7, y)
+
+			cords.xy2chessboard(x, y - 1)
+			cords.xy2chessboard(x, y - 2)
+			cords.xy2chessboard(x, y - 3)
+			cords.xy2chessboard(x, y - 4)
+			cords.xy2chessboard(x, y - 5)
+			cords.xy2chessboard(x, y - 6)
+			cords.xy2chessboard(x, y - 7)
+
+			cords.xy2chessboard(x, y + 1)
+			cords.xy2chessboard(x, y + 2)
+			cords.xy2chessboard(x, y + 3)
+			cords.xy2chessboard(x, y + 4)
+			cords.xy2chessboard(x, y + 5)
+			cords.xy2chessboard(x, y + 6)
+			cords.xy2chessboard(x, y + 7)
+		]
+	}
 	return []
 }
