@@ -227,6 +227,8 @@ fn (mut app App) handle_tap() {
 	tilex := (avgy / (h / 8))
 	tiley := (avgx / (w / 8))
 
+	if tilex > 7 || tiley > 7 {return}
+
 	mut allowed := [[0]]
 	allowed.clear()
 	for i in app.board.highlighted_tiles {
