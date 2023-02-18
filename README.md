@@ -22,6 +22,7 @@ to build use:
 
 ## Working on right now🔧
 - ● Pieces displayed ✅
+- ● FEN support ✅
 - ● Move rollback ✅
 - ● Workable on Android ✅
 - ● Properly resizable window ✅
@@ -32,5 +33,6 @@ to build use:
 - ● Stockfish integration ❌
 - ● Bluetooth multiplayer ❌
 
-![image](https://user-images.githubusercontent.com/83360271/218329899-d16b3840-fb20-4f2b-88e0-0beb8441a101.png)
-![image](https://user-images.githubusercontent.com/83360271/218329911-e9e18c98-6099-4f6d-b67d-b8642577e531.png)
+## Preview ✨
+![image](https://user-images.githubusercontent.com/83360271/219865652-8c79715a-e1a0-4917-919d-32b7d1f9d263.png)
+![image](https://user-images.githubusercontent.com/83360271/219865719-2072a439-bef0-4361-b3f9-906fcde72000.png)
