@@ -61,5 +61,6 @@ pub fn (figure FigureKind) is_king() bool {
 
 [inline]
 pub fn (figure FigureKind) is_enemy(piece FigureKind) bool {
+	if piece == .nothing || figure == .nothing {return false}
 	return figure.is_white() == piece.is_black()
 }

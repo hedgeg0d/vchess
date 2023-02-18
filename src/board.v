@@ -64,14 +64,23 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 	mut results := [][]int{}
 	field := board.field[x][y]
 	if field.is_pawn() {
+		self := board.field[x][y]
 		if field.is_white() {
-			results << [[x - 1, y], [x - 2, y]]
+			if board.field[x - 1][y] == .nothing {results << [[x - 1, y]]}
+			if true && board.field[x - 2][y] == .nothing {results << [[x - 2, y]]}
+			if board.field[x - 1][y - 1].is_enemy(self)  {results << [[x - 1, y - 1]]}
+			if board.field[x - 1][y + 1].is_enemy(self)  {results << [[x - 1, y + 1]]}
 		} else {
-			results << [[x + 1, y], [x + 2, y]]
+			//TODO: replace true with is_first_move() check
+			if board.field[x + 1][y] == .nothing {results << [[x + 1, y]]}
+			if true && board.field[x + 2][y] == .nothing {results << [[x + 2, y]]}
+			if board.field[x + 1][y - 1].is_enemy(self)  {results << [[x + 1, y - 1]]}
+			if board.field[x + 1][y + 1].is_enemy(self)  {results << [[x + 1, y + 1]]}
 		}
 	}
 
 	if field.is_knight() {
+		//TODO: fix black knight bug
 		return [
 			cords.xy2chessboard(x - 2, y + 1)
 			cords.xy2chessboard(x - 2, y - 1)
