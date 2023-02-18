@@ -59,28 +59,6 @@ pub fn (mut board Board) get_line(coordinate int, is_horizontal bool, reversed b
 	else {return board.get_vline(coordinate)}
 }
 
-pub fn (mut board Board) is_allowed_step(x1 int, y1 int, x2 int, y2 int) bool {
-	if x1 > 7 || x1 < 0 || y1 > 7 || y1 < 0 || x2 > 7 || x2 < 0 || y2 > 7 || y2 < 0 {return false}
-	if x1 == x2 && y1 == y2 {return true}
-	mut cord1 := 0
-	mut cord2 := 0
-	mut line := []figure_kind.FigureKind{}
-	if x1 == x2 {
-		line = board.get_vline(x1)
-		cord1 = y1
-		cord2 = y2
-	}
-	if y1 == y2 {
-		line = board.get_hline(y1)
-		cord1 = x1
-		cord2 = x2
-	}
-	for i in 0 .. cord1 + 1 {line.delete(0)}
-	for i in 0 .. 8 - cord2 {line.delete_last()}
-	for i in line {if i != .nothing {return false}}
-	return true
-}
-
 //here happans shit with coordinates TODO: fix thiss
 pub fn (mut board Board) allowed_moves(x int, y int) []string {
 	mut results := [][]int{}
@@ -121,39 +99,35 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 	}
 
 	if field.is_rook() {
-		return [
-			cords.xy2chessboard(x - 1, y)
-			cords.xy2chessboard(x - 2, y)
-			cords.xy2chessboard(x - 3, y)
-			cords.xy2chessboard(x - 4, y)
-			cords.xy2chessboard(x - 5, y)
-			cords.xy2chessboard(x - 6, y)
-			cords.xy2chessboard(x - 7, y)
-
-			cords.xy2chessboard(x + 1, y)
-			cords.xy2chessboard(x + 2, y)
-			cords.xy2chessboard(x + 3, y)
-			cords.xy2chessboard(x + 4, y)
-			cords.xy2chessboard(x + 5, y)
-			cords.xy2chessboard(x + 6, y)
-			cords.xy2chessboard(x + 7, y)
-
-			cords.xy2chessboard(x, y - 1)
-			cords.xy2chessboard(x, y - 2)
-			cords.xy2chessboard(x, y - 3)
-			cords.xy2chessboard(x, y - 4)
-			cords.xy2chessboard(x, y - 5)
-			cords.xy2chessboard(x, y - 6)
-			cords.xy2chessboard(x, y - 7)
-
-			cords.xy2chessboard(x, y + 1)
-			cords.xy2chessboard(x, y + 2)
-			cords.xy2chessboard(x, y + 3)
-			cords.xy2chessboard(x, y + 4)
-			cords.xy2chessboard(x, y + 5)
-			cords.xy2chessboard(x, y + 6)
-			cords.xy2chessboard(x, y + 7)
-		]
+		mut nx := x
+		self := board.field[x][y]
+		for nx < 7 {
+			nx++
+			if board.field[nx][y] == .nothing {results << [[nx, y]]}
+			else { if board.field[nx][y].is_enemy(self) {results << [[nx, y]]}
+				break}
+		}
+		nx = x
+		for nx > 0 {
+			nx--
+			if board.field[nx][y] == .nothing {results << [[nx, y]]}
+			else { if board.field[nx][y].is_enemy(self) {results << [[nx, y]]}
+				break}
+		}
+		mut ny := y
+		for ny < 7 {
+			ny++
+			if board.field[x][ny] == .nothing {results << [[x, ny]]}
+			else { if board.field[x][ny].is_enemy(self) {results << [[nx, y]]}
+				break}
+		}
+		ny = y
+		for ny > 0 {
+			ny--
+			if board.field[x][ny] == .nothing {results << [[x, ny]]}
+			else { if board.field[x][ny].is_enemy(self) {results << [[x, ny]]}
+				break}
+		}
 	}
 	mut final := []string{}
 	for i in results {final << cords.xy2chessboard(i[0], i[1])}
