@@ -346,7 +346,7 @@ fn init_images(mut app App) {
 		bishop_black := os.read_apk_asset('black/bishop.png') or {panic(err)}
 		rook_black := os.read_apk_asset('black/rook.png') or {panic(err)}
 		queen_black := os.read_apk_asset('black/queen.png') or {panic(err)}
-		king_black := os.read_apk_asset('black/pawn.png') or {panic(err)}
+		king_black := os.read_apk_asset('black/king.png') or {panic(err)}
 		app.pawn_black = app.gg.create_image_from_byte_array(pawn_black)
 		app.knight_black = app.gg.create_image_from_byte_array(knight_black)
 		app.bishop_black = app.gg.create_image_from_byte_array(bishop_black)
