@@ -224,13 +224,12 @@ fn (mut app App) handle_tap() {
 
 	if tilex > 7 || tiley > 7 || tilex < 0 || tiley < 0 {return}
 
-	mut allowed := [[0]]
-	allowed.clear()
+	mut allowed := [][]int{}
 	for i in app.board.highlighted_tiles {
 		pos := cords.chessboard2xy(i)
 		if is_valid(pos) && (app.board.field[pos[0]][pos[1]] == .nothing ||
 		app.board.field[cords.chessboard2xy(app.current_tile)[0]][cords.chessboard2xy(app.current_tile)[1]].is_enemy(app.board.field[pos[0]][pos[1]])) {
-			allowed.insert(0, pos)
+			allowed << pos
 		}
 	}
 
@@ -240,7 +239,7 @@ fn (mut app App) handle_tap() {
 		if app.board.field[tilex][tiley] != .nothing{
 			if app.board.is_white_move == app.board.field[tilex][tiley].is_white() {
 				app.current_tile = cords.xy2chessboard(tilex, tiley)
-				app.board.highlighted_tiles.insert(0, app.board.allowed_moves(tilex, tiley))
+				app.board.highlighted_tiles << app.board.allowed_moves(tilex, tiley)
 			}
 		}
 	} else {
@@ -248,7 +247,7 @@ fn (mut app App) handle_tap() {
 			if app.board.field[tilex][tiley] != .nothing && !(app.board.field[tilex][tiley].is_enemy(app.board.field[cords.chessboard2xy(app.current_tile)[0]][cords.chessboard2xy(app.current_tile)[1]])) {
 			app.current_tile = cords.xy2chessboard(tilex, tiley)
 			app.board.highlighted_tiles.clear()
-			app.board.highlighted_tiles.insert(0,app.board.allowed_moves(tilex, tiley))}
+			app.board.highlighted_tiles << app.board.allowed_moves(tilex, tiley)}
 			else {app.current_tile = '-'
 			app.board.highlighted_tiles.clear()}
 			return
@@ -260,7 +259,7 @@ fn (mut app App) handle_tap() {
 			return
 		}
 		if [tilex, tiley] in allowed {
-			app.undo.insert(app.undo.len, fen_utils.board_2_fen(app.board))
+			app.undo << fen_utils.board_2_fen(app.board)
 			app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
 			app.current_tile = '-'
 			if !app.board.is_white_move {app.board.fullmove_number++}
@@ -391,9 +390,8 @@ fn (app &App) draw() {
 	width_unused, height_unused := app.ui.window_width - w * 8, app.ui.window_height - h * 8
 	mut xcord := width_unused / 2
 	mut ycord := height_unused / 2
-	mut higlighted_l := [[0]]
-	higlighted_l.clear()
-	for i in app.board.highlighted_tiles {higlighted_l.insert(0, cords.chessboard2xy(i))}
+	mut higlighted_l := [][]int{}
+	for i in app.board.highlighted_tiles {higlighted_l << cords.chessboard2xy(i)}
 	mut is_dark := false
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
