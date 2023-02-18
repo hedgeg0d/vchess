@@ -14,7 +14,7 @@ to build use:
  git clone https://github.com/hedgeg0d/vchess/
  
 # 2. Build folder
- cd vchess && v -prod .
+ cd vchess && v .
 
 # 3. Executable file named "vchess" will appear
  ./vchess
