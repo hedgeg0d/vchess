@@ -25,6 +25,7 @@ to build use:
 - ● Workable on Android ✅
 - ● Properly resizable window ✅
 - ● Theme switching ❌
+- ● Animations ❌
 - ● All pieces movable ❌
 - ● Rules ❌
 - ● Stockfish integration ❌
