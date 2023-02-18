@@ -41,7 +41,7 @@ pub fn (figure FigureKind) is_knight() bool {
 
 [inline]
 pub fn (figure FigureKind) is_bishop() bool {
-	return figure == .bishop_black || figure == .bishop_black
+	return figure == .bishop_black || figure == .bishop_white
 }
 
 [inline]

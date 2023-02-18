@@ -78,10 +78,10 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 			cords.xy2chessboard(x + 2, y + 1)
 			cords.xy2chessboard(x + 2, y - 1)
 
-			cords.xy2chessboard(x + 1, y + 2)
-			cords.xy2chessboard(x + 1, y - 2)
 			cords.xy2chessboard(x - 1, y + 2)
 			cords.xy2chessboard(x - 1, y - 2)
+			cords.xy2chessboard(x + 1, y + 2)
+			cords.xy2chessboard(x + 1, y - 2)
 		]
 	}
 
@@ -129,6 +129,44 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 				break}
 		}
 	}
+
+	if field.is_bishop() {
+		self := board.field[x][y]
+		mut nx := x
+		mut ny := y
+		for nx < 7 && ny < 7 {
+			nx++
+			ny++
+			if board.field[nx][ny] == .nothing {results << [[nx, ny]]}
+			else { if board.field[nx][ny].is_enemy(self) {results << [[nx, ny]]}
+				break}
+		}
+		nx, ny = x, y
+		for nx < 7 && ny > 0 {
+			nx++
+			ny--
+			if board.field[nx][ny] == .nothing {results << [[nx, ny]]}
+			else { if board.field[nx][ny].is_enemy(self) {results << [[nx, ny]]}
+				break}
+		}
+		nx, ny = x, y
+		for nx > 0 && ny > 0 {
+			nx--
+			ny--
+			if board.field[nx][ny] == .nothing {results << [[nx, ny]]}
+			else { if board.field[nx][ny].is_enemy(self) {results << [[nx, ny]]}
+				break}
+		}
+		nx, ny = x, y
+		for nx > 0 && ny < 7 {
+			nx--
+			ny++
+			if board.field[nx][ny] == .nothing {results << [[nx, ny]]}
+			else { if board.field[nx][ny].is_enemy(self) {results << [[nx, ny]]}
+				break}
+		}
+	}
+
 	mut final := []string{}
 	for i in results {final << cords.xy2chessboard(i[0], i[1])}
 	return final
