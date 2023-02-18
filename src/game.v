@@ -215,19 +215,14 @@ fn (mut app App) handle_touches() {
 fn (mut app App) handle_tap() {
 	_, ypad := app.ui.x_padding, app.ui.y_padding
 	mut w, mut h := app.ui.window_width, app.ui.window_height
-	if app.ui.window_height > app.ui.window_width {
-		w, h = app.ui.window_width , app.ui.window_width
-	} else {
-		w, h = app.ui.window_height, app.ui.window_height
-	}
-	m := math.min(w, h)
+	wt, ht := math.min(w / 8, h / 8), math.min(w / 8, h / 8)
 	s, e := app.touch.start, app.touch.end
 	avgx, avgy := avg(s.pos.x, e.pos.x), avg(s.pos.y, e.pos.y)
+	width_unused, height_unused := app.ui.window_width - wt * 8, app.ui.window_height - ht * 8
+	tilex := (avgy - height_unused / 2) / (wt)
+	tiley := (avgx - width_unused / 2) / (ht)
 
-	tilex := (avgy / (h / 8))
-	tiley := (avgx / (w / 8))
-
-	if tilex > 7 || tiley > 7 {return}
+	if tilex > 7 || tiley > 7 || tilex < 0 || tiley < 0 {return}
 
 	mut allowed := [[0]]
 	allowed.clear()
@@ -392,17 +387,10 @@ fn frame(app &App) {
 }
 
 fn (app &App) draw() {
-	mut w := 0
-	mut h := 0
-	if app.ui.window_height > app.ui.window_width {
-		w, h = app.ui.window_width / 8, app.ui.window_width / 8
-	} else {
-		w, h = app.ui.window_height / 8, app.ui.window_height / 8
-	}
-	//w := app.ui.window_width / 8
-	//h := app.ui.window_height / 8
-	mut xcord := 0
-	mut ycord := 0
+	w, h := math.min(app.ui.window_height / 8, app.ui.window_width / 8), math.min(app.ui.window_height / 8, app.ui.window_width / 8)
+	width_unused, height_unused := app.ui.window_width - w * 8, app.ui.window_height - h * 8
+	mut xcord := width_unused / 2
+	mut ycord := height_unused / 2
 	mut higlighted_l := [[0]]
 	higlighted_l.clear()
 	for i in app.board.highlighted_tiles {higlighted_l.insert(0, cords.chessboard2xy(i))}
@@ -453,7 +441,7 @@ fn (app &App) draw() {
 
 		}
 		is_dark = !is_dark
-		xcord = 0
+		xcord = width_unused / 2
 		ycord += h
 	}
 }
