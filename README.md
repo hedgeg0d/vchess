@@ -26,9 +26,9 @@ to build use:
 - ● Move rollback ✅
 - ● Workable on Android ✅
 - ● Properly resizable window ✅
+- ● All pieces movable  ✅
 - ● Theme switching ❌
 - ● Animations ❌
-- ● All pieces movable ❌
 - ● Rules ❌
 - ● Stockfish integration ❌
 - ● Bluetooth multiplayer ❌
