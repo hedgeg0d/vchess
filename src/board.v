@@ -118,7 +118,7 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		for ny < 7 {
 			ny++
 			if board.field[x][ny] == .nothing {results << [[x, ny]]}
-			else { if board.field[x][ny].is_enemy(self) {results << [[nx, y]]}
+			else {if board.field[x][ny].is_enemy(self) {results << [[x, ny]]}
 				break}
 		}
 		ny = y
@@ -163,6 +163,70 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 			ny++
 			if board.field[nx][ny] == .nothing {results << [[nx, ny]]}
 			else { if board.field[nx][ny].is_enemy(self) {results << [[nx, ny]]}
+				break}
+		}
+	}
+
+	if field.is_queen() {
+		self := board.field[x][y]
+		mut nx := x
+		mut ny := y
+		for nx < 7 && ny < 7 {
+			nx++
+			ny++
+			if board.field[nx][ny] == .nothing {results << [[nx, ny]]}
+			else { if board.field[nx][ny].is_enemy(self) {results << [[nx, ny]]}
+				break}
+		}
+		nx, ny = x, y
+		for nx < 7 && ny > 0 {
+			nx++
+			ny--
+			if board.field[nx][ny] == .nothing {results << [[nx, ny]]}
+			else { if board.field[nx][ny].is_enemy(self) {results << [[nx, ny]]}
+				break}
+		}
+		nx, ny = x, y
+		for nx > 0 && ny > 0 {
+			nx--
+			ny--
+			if board.field[nx][ny] == .nothing {results << [[nx, ny]]}
+			else { if board.field[nx][ny].is_enemy(self) {results << [[nx, ny]]}
+				break}
+		}
+		nx, ny = x, y
+		for nx > 0 && ny < 7 {
+			nx--
+			ny++
+			if board.field[nx][ny] == .nothing {results << [[nx, ny]]}
+			else { if board.field[nx][ny].is_enemy(self) {results << [[nx, ny]]}
+				break}
+		}
+		nx, ny = x, y
+		for nx < 7 {
+			nx++
+			if board.field[nx][y] == .nothing {results << [[nx, y]]}
+			else { if board.field[nx][y].is_enemy(self) {results << [[nx, y]]}
+				break}
+		}
+		nx = x
+		for nx > 0 {
+			nx--
+			if board.field[nx][y] == .nothing {results << [[nx, y]]}
+			else { if board.field[nx][y].is_enemy(self) {results << [[nx, y]]}
+				break}
+		}
+		for ny < 7 {
+			ny++
+			if board.field[x][ny] == .nothing {results << [[x, ny]]}
+			else { if board.field[x][ny].is_enemy(self) {results << [[x, ny]]}
+				break}
+		}
+		ny = y
+		for ny > 0 {
+			ny--
+			if board.field[x][ny] == .nothing {results << [[x, ny]]}
+			else { if board.field[x][ny].is_enemy(self) {results << [[x, ny]]}
 				break}
 		}
 	}
