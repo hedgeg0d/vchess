@@ -9,6 +9,7 @@ import fen_utils
 import figure_kind
 import board
 import cords
+import saving
 
 struct App {
 	mut:
@@ -32,6 +33,7 @@ struct App {
 	queen_black  gg.Image
 	king_black   gg.Image
 	current_tile string
+	saver		 saving.Save
 }
 
 struct Ui {
@@ -56,6 +58,7 @@ const (
 	tile_dark = gx.rgb(97, 120, 141)
 	highlighted_light = gx.rgb(72, 117, 110)
 	highlighted_dark = gx.rgb(57, 100, 94)
+	main_save_name = 'SAVEFILE.txt'
 )
 
 struct Pos {
@@ -90,6 +93,8 @@ fn (mut app App) new_game() {
 	app.board.highlighted_tiles = []
 	app.board.is_first_move = true
 	app.current_tile = '-'
+	app.saver = saving.Save{}
+	app.saver.main_name = main_save_name
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
 			if y == 0 {
@@ -200,6 +205,9 @@ fn (mut app App) on_key_down(key gg.KeyCode) {
 			app.current_tile = '-'
 			app.board.highlighted_tiles.clear()
 		}
+		.r {
+			app.new_game()
+		}
 		else {}
 	}
 }
@@ -266,9 +274,8 @@ fn (mut app App) handle_tap() {
 			piecedx := if app.board.is_white_move {tilex + 1} else {tilex - 1}
 			if is_valid([piecedx, tiley]) {
 				pieced := app.board.field[piecedx][tiley]
-				if piece.is_pawn() && pieced.is_pawn() && pieced.is_enemy(piece) {app.board.kill(piecedx, tiley)}
+				if piece.is_pawn() && pieced.is_pawn() && pieced.is_enemy(piece) && cords.en_passant2xy(app.board.last_en_passant, app.board.is_white_move).reverse() == [piecedx, tiley]{app.board.kill(piecedx, tiley)}
 				if piece.is_pawn() && math.abs(oldcord[0] - tilex) > 1 {app.board.last_en_passant = cords.xy2chessboard(piecedx, tiley)} else {app.board.last_en_passant = '-'}
-				//println('Last en passant: ${app.board.last_en_passant} \n ${cords.en_passant2xy(app.board.last_en_passant, app.board.is_white_move)}')
 			}
 			app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
 			app.current_tile = '-'
