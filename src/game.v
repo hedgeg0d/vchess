@@ -197,6 +197,8 @@ fn (mut app App) on_key_down(key gg.KeyCode) {
 				fen_utils.fen_2_board(mut app.board, app.undo.last())
 				app.undo.delete_last()
 			}
+			app.current_tile = '-'
+			app.board.highlighted_tiles.clear()
 		}
 		else {}
 	}
@@ -260,6 +262,14 @@ fn (mut app App) handle_tap() {
 		}
 		if [tilex, tiley] in allowed {
 			app.undo << fen_utils.board_2_fen(app.board)
+			piece := app.board.field[oldcord[0]][oldcord[1]]
+			piecedx := if app.board.is_white_move {tilex + 1} else {tilex - 1}
+			if is_valid([piecedx, tiley]) {
+				pieced := app.board.field[piecedx][tiley]
+				if piece.is_pawn() && pieced.is_pawn() && pieced.is_enemy(piece) {app.board.kill(piecedx, tiley)}
+				if piece.is_pawn() && math.abs(oldcord[0] - tilex) > 1 {app.board.last_en_passant = cords.xy2chessboard(piecedx, tiley)} else {app.board.last_en_passant = '-'}
+				//println('Last en passant: ${app.board.last_en_passant} \n ${cords.en_passant2xy(app.board.last_en_passant, app.board.is_white_move)}')
+			}
 			app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
 			app.current_tile = '-'
 			if !app.board.is_white_move {app.board.fullmove_number++}

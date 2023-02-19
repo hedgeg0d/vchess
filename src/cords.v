@@ -32,3 +32,13 @@ pub fn chessboard2xy (cord string) []int{
 	y := 8 - (parts[1].int())
 	return [y, x]
 }
+
+[inline]
+pub fn en_passant2xy (en_passant string, is_white_move bool) []int {
+	cords := chessboard2xy(en_passant)
+	if cords.len < 2 {exit(1)}
+	mut x := cords[0]
+	y := cords[1]
+	if !is_white_move {x--} else {x++}
+	return [y, x]
+}

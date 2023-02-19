@@ -44,6 +44,11 @@ pub fn (mut board Board) is_unmoved_pawn(is_white bool, y int) bool {
 	return (is_white && y == 6) || (!is_white && y == 1)
 }
 
+[inline]
+pub fn (mut board Board) kill (x int, y int) {
+	board.field[x][y] = .nothing
+}
+
 pub fn (mut board Board) get_hline(y int) []figure_kind.FigureKind {
 	if y < 0 || y > 7 {return []}
 	mut results := []figure_kind.FigureKind{}
@@ -74,15 +79,23 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 	if field.is_pawn() {
 		self := board.field[x][y]
 		if field.is_white() {
-			if board.field[x - 1][y] == .nothing {results << [[x - 1, y]]}
-			if board.is_unmoved_pawn(board.is_white_move, x) && board.field[x - 2][y] == .nothing {results << [[x - 2, y]]}
+			if is_valid([x - 1, y]) && board.field[x - 1][y] == .nothing {results << [[x - 1, y]]}
+			if board.is_unmoved_pawn(board.is_white_move, x) && board.field[x - 1][y] == .nothing && board.field[x - 2][y] == .nothing {results << [[x - 2, y]]}
 			if is_valid([x - 1, y - 1]) && board.field[x - 1][y - 1].is_enemy(self)  {results << [[x - 1, y - 1]]}
 			if is_valid([x - 1, y + 1]) && board.field[x - 1][y + 1].is_enemy(self)  {results << [[x - 1, y + 1]]}
+			if board.last_en_passant != '-' {
+				if is_valid([x, y - 1]) && cords.en_passant2xy(board.last_en_passant, board.is_white_move).reverse() == [x, y - 1]  {results << [[x - 1, y - 1]]}
+				if is_valid([x, y + 1]) && cords.en_passant2xy(board.last_en_passant, board.is_white_move).reverse() == [x, y + 1]  {results << [[x - 1, y + 1]]}
+			}
 		} else {
-			if board.field[x + 1][y] == .nothing {results << [[x + 1, y]]}
-			if board.is_unmoved_pawn(board.is_white_move, x) && board.field[x + 2][y] == .nothing {results << [[x + 2, y]]}
+			if is_valid([x - 1, y]) && board.field[x + 1][y] == .nothing {results << [[x + 1, y]]}
+			if board.is_unmoved_pawn(board.is_white_move, x) && board.field[x + 1][y] == .nothing  && board.field[x + 2][y] == .nothing {results << [[x + 2, y]]}
 			if is_valid([x + 1, y - 1]) && board.field[x + 1][y - 1].is_enemy(self)  {results << [[x + 1, y - 1]]}
 			if is_valid([x + 1, y + 1]) && board.field[x + 1][y + 1].is_enemy(self)  {results << [[x + 1, y + 1]]}
+			if board.last_en_passant != '-' {
+				if is_valid([x, y - 1]) && cords.en_passant2xy(board.last_en_passant, board.is_white_move).reverse() == [x, y - 1]  {results << [[x + 1, y - 1]]}
+				if is_valid([x, y + 1]) && cords.en_passant2xy(board.last_en_passant, board.is_white_move).reverse() == [x, y + 1]  {results << [[x + 1, y + 1]]}
+			}
 		}
 	}
 
