@@ -6,7 +6,7 @@ Chess game written in V programming language(in development)
 
 ### Build🔨
 
-You need Vlang installed to play: `https//vlang.io`
+You need Vlang installed to play: `https://vlang.io`
 
 to build use:
 ```
