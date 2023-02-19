@@ -35,6 +35,15 @@ pub fn (mut board Board) swap (x1 int, y1 int, x2 int, y2 int) {
 	board.field[x2][y2] = tile1
 }
 
+[inline]
+pub fn is_valid(pos []int) bool{
+	return pos[0] >= 0 && pos[0] < 8 && pos[1] >= 0 && pos[1] < 8
+}
+[inline]
+pub fn (mut board Board) is_unmoved_pawn(is_white bool, y int) bool {
+	return (is_white && y == 6) || (!is_white && y == 1)
+}
+
 pub fn (mut board Board) get_hline(y int) []figure_kind.FigureKind {
 	if y < 0 || y > 7 {return []}
 	mut results := []figure_kind.FigureKind{}
@@ -59,7 +68,6 @@ pub fn (mut board Board) get_line(coordinate int, is_horizontal bool, reversed b
 	else {return board.get_vline(coordinate)}
 }
 
-//here happans shit with coordinates TODO: fix thiss
 pub fn (mut board Board) allowed_moves(x int, y int) []string {
 	mut results := [][]int{}
 	field := board.field[x][y]
@@ -67,15 +75,14 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		self := board.field[x][y]
 		if field.is_white() {
 			if board.field[x - 1][y] == .nothing {results << [[x - 1, y]]}
-			if true && board.field[x - 2][y] == .nothing {results << [[x - 2, y]]}
-			if board.field[x - 1][y - 1].is_enemy(self)  {results << [[x - 1, y - 1]]}
-			if board.field[x - 1][y + 1].is_enemy(self)  {results << [[x - 1, y + 1]]}
+			if board.is_unmoved_pawn(board.is_white_move, x) && board.field[x - 2][y] == .nothing {results << [[x - 2, y]]}
+			if is_valid([x - 1, y - 1]) && board.field[x - 1][y - 1].is_enemy(self)  {results << [[x - 1, y - 1]]}
+			if is_valid([x - 1, y + 1]) && board.field[x - 1][y + 1].is_enemy(self)  {results << [[x - 1, y + 1]]}
 		} else {
-			//TODO: replace true with is_first_move() check
 			if board.field[x + 1][y] == .nothing {results << [[x + 1, y]]}
-			if true && board.field[x + 2][y] == .nothing {results << [[x + 2, y]]}
-			if board.field[x + 1][y - 1].is_enemy(self)  {results << [[x + 1, y - 1]]}
-			if board.field[x + 1][y + 1].is_enemy(self)  {results << [[x + 1, y + 1]]}
+			if board.is_unmoved_pawn(board.is_white_move, x) && board.field[x + 2][y] == .nothing {results << [[x + 2, y]]}
+			if is_valid([x + 1, y - 1]) && board.field[x + 1][y - 1].is_enemy(self)  {results << [[x + 1, y - 1]]}
+			if is_valid([x + 1, y + 1]) && board.field[x + 1][y + 1].is_enemy(self)  {results << [[x + 1, y + 1]]}
 		}
 	}
 
