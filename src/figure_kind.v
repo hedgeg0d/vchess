@@ -64,3 +64,13 @@ pub fn (figure FigureKind) is_enemy(piece FigureKind) bool {
 	if piece == .nothing || figure == .nothing {return false}
 	return figure.is_white() == piece.is_black()
 }
+
+[inline]
+pub fn (mut figure FigureKind) promote(choice int) {
+	match choice {
+		1 {figure = if figure.is_white() {FigureKind.bishop_white} else {FigureKind.bishop_black}}
+		2 {figure = if figure.is_white() {FigureKind.knight_white} else {FigureKind.knight_black}}
+		3 {figure = if figure.is_white() {FigureKind.rook_white} else {FigureKind.rook_black}}
+		else {figure = if figure.is_white() {FigureKind.queen_white} else {FigureKind.queen_black}}
+	}
+}

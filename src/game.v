@@ -58,7 +58,7 @@ const (
 	tile_dark = gx.rgb(97, 120, 141)
 	highlighted_light = gx.rgb(72, 117, 110)
 	highlighted_dark = gx.rgb(57, 100, 94)
-	main_save_name = 'SAVEFILE.txt'
+	main_save_name = 'SAVEFILE'
 )
 
 struct Pos {
@@ -278,6 +278,9 @@ fn (mut app App) handle_tap() {
 				if piece.is_pawn() && math.abs(oldcord[0] - tilex) > 1 {app.board.last_en_passant = cords.xy2chessboard(piecedx, tiley)} else {app.board.last_en_passant = '-'}
 			}
 			app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
+			if piece.is_pawn() && (tilex == 0 || tilex == 7) {
+				app.board.field[tilex][tiley].promote(4)
+			}
 			app.current_tile = '-'
 			if !app.board.is_white_move {app.board.fullmove_number++}
 			app.board.is_white_move = !app.board.is_white_move
