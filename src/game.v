@@ -277,6 +277,19 @@ fn (mut app App) handle_tap() {
 				if piece.is_pawn() && pieced.is_pawn() && pieced.is_enemy(piece) && cords.en_passant2xy(app.board.last_en_passant, app.board.is_white_move).reverse() == [piecedx, tiley]{app.board.kill(piecedx, tiley)}
 				if piece.is_pawn() && math.abs(oldcord[0] - tilex) > 1 {app.board.last_en_passant = cords.xy2chessboard(piecedx, tiley)} else {app.board.last_en_passant = '-'}
 			}
+			if oldcord == [7, 4] && [tilex, tiley] == [7, 2] {app.board.swap(7, 0, 7,  3)}
+			if oldcord == [0, 4] && [tilex, tiley] == [0, 2] {app.board.swap(0, 0, 0,  3)}
+			if oldcord == [7, 4] && [tilex, tiley] == [7, 6] {app.board.swap(7, 7, 7,  5)}
+			if oldcord == [0, 4] && [tilex, tiley] == [0, 6] {app.board.swap(0, 7, 0,  5)}
+			if piece.is_rook() {
+				if piece.is_white() {
+					if oldcord[0] == 7 && oldcord[1] == 7 {app.board.white_short_castle_allowed = false}
+					if oldcord[0] == 7 && oldcord[1] == 0 {app.board.white_long_castle_allowed = false}
+				} else {
+					if oldcord[0] == 0 && oldcord[1] == 7 {app.board.black_short_castle_allowed = false}
+					if oldcord[0] == 0 && oldcord[1] == 0 {app.board.black_long_castle_allowed = false}
+				}
+			}
 			app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
 			if piece.is_pawn() && (tilex == 0 || tilex == 7) {
 				app.board.field[tilex][tiley].promote(4)
@@ -472,7 +485,7 @@ fn main() {
 	curves_quality := 4
 	mut app := &App{}
 	app.new_game()
-	//fen_utils.fen_2_board(mut app.board, '8/8/8/8/1r2R3/8/8/8 b KQkq - 0 1')
+	fen_utils.fen_2_board(mut app.board, 'r3k2r/pppp1p1p/8/1nbp1bp1/8/1NBQ1BN1/PPPPPPPP/R3K2R w KQkq - 0 1')
 	font_path := $if android {'fonts/RobotoMono-Regular.ttf'} $else {os.resource_abs_path('assets/fonts/RobotoMono-Regular.ttf')}
 	app.gg = gg.new_context(
 		bg_color: gx.rgb(22, 21, 18)

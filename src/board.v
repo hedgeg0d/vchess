@@ -115,16 +115,25 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 	}
 
 	if field.is_king() {
-		return [
-			cords.xy2chessboard(x + 1, y)
-			cords.xy2chessboard(x - 1, y)
-			cords.xy2chessboard(x, y + 1)
-			cords.xy2chessboard(x, y -1)
-			cords.xy2chessboard(x + 1, y + 1)
-			cords.xy2chessboard(x - 1, y + 1)
-			cords.xy2chessboard(x + 1, y - 1)
-			cords.xy2chessboard(x - 1, y - 1)
-		]
+		results << [[x + 1, y]]
+		results << [[x - 1, y]]
+		results << [[x, y + 1]]
+		results << [[x, y - 1]]
+		results << [[x + 1, y + 1]]
+		results << [[x - 1, y + 1]]
+		results << [[x + 1, y - 1]]
+		results << [[x - 1, y - 1]]
+		if field.is_white() {
+			if x == 7 && y == 4 {
+				if (board.field[7][3] == .nothing && board.field[7][2] == .nothing && board.field[7][1] == .nothing) && board.field[7][0] == .rook_white && board.white_long_castle_allowed {results << [[x, y - 2]]}
+				if (board.field[7][5] == .nothing && board.field[7][6] == .nothing && board.field[7][7] == .rook_white) && board.white_short_castle_allowed {results << [[x, y + 2]]}
+			}
+		} else {
+			if x == 0 && y == 4 {
+				if (board.field[0][3] == .nothing && board.field[0][2] == .nothing && board.field[0][1] == .nothing && board.field[0][0] == .rook_black) && board.black_long_castle_allowed {results << [[x, y - 2]]}
+				if (board.field[0][5] == .nothing && board.field[0][6] == .nothing && board.field[0][7] == .rook_black) && board.black_short_castle_allowed {results << [[x, y + 2]]}
+			}
+		}
 	}
 
 	if field.is_rook() {
