@@ -18,6 +18,7 @@ pub fn xy2chessboard (x int, y int) string {
 }
 pub fn chessboard2xy (cord string) []int{
 	parts := cord.split('')
+	if parts.len < 2 {}
 	x := match parts[0] {
 		'a' {0}
 		'b' {1}

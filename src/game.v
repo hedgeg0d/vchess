@@ -485,7 +485,7 @@ fn main() {
 	curves_quality := 4
 	mut app := &App{}
 	app.new_game()
-	fen_utils.fen_2_board(mut app.board, 'r3k2r/pppp1p1p/8/1nbp1bp1/8/1NBQ1BN1/PPPPPPPP/R3K2R w KQkq - 0 1')
+	fen_utils.fen_2_board(mut app.board, '4k3/8/8/1r6/8/8/8/R3K2R w KQ - 0 1')
 	font_path := $if android {'fonts/RobotoMono-Regular.ttf'} $else {os.resource_abs_path('assets/fonts/RobotoMono-Regular.ttf')}
 	app.gg = gg.new_context(
 		bg_color: gx.rgb(22, 21, 18)
