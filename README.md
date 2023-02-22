@@ -27,9 +27,9 @@ to build use:
 - ● Workable on Android       ✅
 - ● Properly resizable window ✅
 - ● All pieces movable        ✅
+- ● Main menu and buttons     ✅
 - ● Progress autosaves        ❌
 - ● Theme switching           ❌
-- ● Main menu and buttons     ❌
 - ● Animations                ❌
 - ● Rules                     ❌
 - ● Stockfish integration     ❌
@@ -38,3 +38,4 @@ to build use:
 ## Preview ✨
 ![image](https://user-images.githubusercontent.com/83360271/219865652-8c79715a-e1a0-4917-919d-32b7d1f9d263.png)
 ![image](https://user-images.githubusercontent.com/83360271/219865719-2072a439-bef0-4361-b3f9-906fcde72000.png)
+![image](https://user-images.githubusercontent.com/83360271/220739594-f925953f-372b-4e7a-b213-c3b07c86764b.png)
