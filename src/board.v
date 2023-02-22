@@ -67,24 +67,23 @@ pub fn (mut board Board) get_vline(x int) []figure_kind.FigureKind {
 	return results
 }
 
-pub fn (mut board Board) get_reachable_fields() [][]int{
+pub fn (mut board Board) get_reachable_fields(ignore_kings bool) [][]int{
 	mut results := [][]int{}
 	for x in 0 .. 8 {
 		for y in 0 .. 8 {
-			println('$x $y')
 			piece := board.field[y][x]
-			if piece != .nothing && !piece.is_king() && (piece.is_white() != board.is_white_move) {
-				for i in board.allowed_moves(y, x) {
-					if i.len == 2 && is_valid(cords.chessboard2xy(i)) {
-						results << cords.chessboard2xy(i)
-					}
-				}
-			}
-			//if piece != .nothing && (piece.is_white() != board.is_white_move) {println('Found $piece at $y $x')}
+			if piece != .nothing && !piece.is_king() && (piece.is_white() != board.is_white_move) {for i in board.allowed_moves(y, x) {if i.len == 2 && is_valid(cords.chessboard2xy(i)) {results << cords.chessboard2xy(i)}}}}
+	}
+	return results
+}
+
+pub fn (mut board Board) get_kings_cords (is_white bool) []int{
+	for x in 0 .. 8 {
+		for y in 0 .. 8 {
+			if board.field[y][x].is_king() && board.field[y][x].is_white() == is_white {return [y, x]}
 		}
 	}
-	println(results)
-	return results
+	return [0, 0]
 }
 
 [inline]
@@ -145,8 +144,7 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		results << [[x - 1, y - 1]]
 		if field.is_white() {
 			if x == 7 && y == 4 {
-				unsafe_fields := board.get_reachable_fields()
-				println(unsafe_fields)
+				unsafe_fields := board.get_reachable_fields(true)
 				is_safe_short := !([7, 5] in unsafe_fields || [7, 6] in unsafe_fields)
 				is_safe_long := !([7, 3] in unsafe_fields || [7, 2] in unsafe_fields || [7, 1] in unsafe_fields)
 				if (board.field[7][3] == .nothing && board.field[7][2] == .nothing && board.field[7][1] == .nothing) && board.field[7][0] == .rook_white && board.white_long_castle_allowed && is_safe_long{results << [[x, y - 2]]}
@@ -154,7 +152,7 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 			}
 		} else {
 			if x == 0 && y == 4 {
-				unsafe_fields := board.get_reachable_fields()
+				unsafe_fields := board.get_reachable_fields(true)
 				is_safe_short := !([0, 5] in unsafe_fields || [0, 6] in unsafe_fields)
 				is_safe_long := !([0, 3] in unsafe_fields || [0, 2] in unsafe_fields || [0, 1] in unsafe_fields)
 				if (board.field[0][3] == .nothing && board.field[0][2] == .nothing && board.field[0][1] == .nothing && board.field[0][0] == .rook_black) && board.black_long_castle_allowed && is_safe_long {results << [[x, y - 2]]}

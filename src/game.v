@@ -32,8 +32,10 @@ struct App {
 	rook_black   gg.Image
 	queen_black  gg.Image
 	king_black   gg.Image
+	m_background gg.Image
 	current_tile string
 	saver		 saving.Save
+	state		 State
 }
 
 struct Ui {
@@ -78,6 +80,12 @@ struct Touch {
 	time time.Time
 }
 
+pub enum State {
+	play
+	menu
+	end
+}
+
 
 fn (mut app App) new_game() {
 	app.board = board.Board{}
@@ -95,6 +103,7 @@ fn (mut app App) new_game() {
 	app.current_tile = '-'
 	app.saver = saving.Save{}
 	app.saver.main_name = main_save_name
+	app.state = .menu
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
 			if y == 0 {
@@ -172,7 +181,7 @@ fn (mut app App) resize() {
 	}
 }
 
-fn (mut app App) handle_swipe() {
+fn (mut app App) handle_swipe_play() {
 	s, e := app.touch.start, app.touch.end
 	w, h := app.ui.window_width, app.ui.window_height
 	dx, dy := e.pos.x - s.pos.x, e.pos.y - s.pos.y
@@ -195,6 +204,11 @@ fn (mut app App) handle_swipe() {
 	}*/
 }
 
+fn (mut app App) handle_swipe_menu() {
+	app.handle_swipe_play()
+}
+
+
 fn (mut app App) on_key_down(key gg.KeyCode) {
 	match key {
 		.backspace {
@@ -216,13 +230,13 @@ fn (mut app App) handle_touches() {
 	s, e := app.touch.start, app.touch.end
 	adx, ady := math.abs(e.pos.x - s.pos.x), math.abs(e.pos.y - s.pos.y)
 	if math.max(adx, ady) < 10 {
-		app.handle_tap()
+		if app.state == .play {app.handle_tap_play()} else {app.handle_tap_menu()}
 	} else {
-		app.handle_swipe()
+		if app.state == .play {app.handle_swipe_play()} else {app.handle_tap_menu()}
 	}
 }
 
-fn (mut app App) handle_tap() {
+fn (mut app App) handle_tap_play() {
 	_, ypad := app.ui.x_padding, app.ui.y_padding
 	mut w, mut h := app.ui.window_width, app.ui.window_height
 	wt, ht := math.min(w / 8, h / 8), math.min(w / 8, h / 8)
@@ -386,6 +400,8 @@ fn init_images(mut app App) {
 		app.rook_black = app.gg.create_image_from_byte_array(rook_black)
 		app.queen_black = app.gg.create_image_from_byte_array(queen_black)
 		app.king_black = app.gg.create_image_from_byte_array(king_black)
+		menu_background := os.read_apk_asset('menu/background1.jpg') or {panic(err)}
+		app.m_background = app.gg.create_image_from_byte_array(menu_background)
 	} $else {
 		app.pawn_white = app.gg.create_image(os.resource_abs_path('assets/white/pawn.png'))
 		app.knight_white = app.gg.create_image(os.resource_abs_path('assets/white/knight.png'))
@@ -400,6 +416,8 @@ fn init_images(mut app App) {
 		app.rook_black = app.gg.create_image(os.resource_abs_path('assets/black/rook.png'))
 		app.queen_black = app.gg.create_image(os.resource_abs_path('assets/black/queen.png'))
 		app.king_black = app.gg.create_image(os.resource_abs_path('assets/black/king.png'))
+
+		app.m_background = app.gg.create_image(os.resource_abs_path('assets/menu/background1.jpg'))
 	}
 }
 
@@ -414,11 +432,12 @@ fn (mut app App) print_field() {
 
 fn frame(app &App) {
 	app.gg.begin()
-	app.draw()
+	if app.state == .play {app.draw_field()}
+	if app.state == .menu {app.draw_menu()}
 	app.gg.end()
 }
 
-fn (app &App) draw() {
+fn (app &App) draw_field() {
 	w, h := math.min(app.ui.window_height / 8, app.ui.window_width / 8), math.min(app.ui.window_height / 8, app.ui.window_width / 8)
 	width_unused, height_unused := app.ui.window_width - w * 8, app.ui.window_height - h * 8
 	mut xcord := width_unused / 2
@@ -477,15 +496,43 @@ fn (app &App) draw() {
 	}
 }
 
+fn (app &App) draw_menu() {
+	w, h := app.ui.window_width, app.ui.window_height
+	app.gg.draw_image(0, 0, w, h, app.m_background)
+	app.gg.draw_text(w / 2, h / 2 - h / 4, 'VChess', gx.TextCfg{
+		color: gx.white
+		size: app.ui.font_size
+		align: .center
+		vertical_align: .bottom
+	})
+	app.gg.draw_rounded_rect_filled(w / 2 - ((w / 4) / 2), h / 2, w / 4, h / 10, 10, gx.black)
+	app.gg.draw_rounded_rect_empty(w / 2 - ((w / 4) / 2), h / 2, w / 4, h / 10, 10, gx.white)
+	app.gg.draw_text(w / 2, h / 2 + h / 13, "Start game", gx.TextCfg{
+		color: gx.white
+		size: app.ui.font_size / 2
+		align: .center
+		vertical_align: .bottom
+	})
+}
+
+
+fn (mut app App) handle_tap_menu() {
+	_, ypad := app.ui.x_padding, app.ui.y_padding
+	mut w, mut h := app.ui.window_width, app.ui.window_height
+	s, e := app.touch.start, app.touch.end
+	avgx, avgy := avg(s.pos.x, e.pos.x), avg(s.pos.y, e.pos.y)
+	if avgx > (w / 2 - ((w / 4) / 2)) && avgx < (w / 2 + ((w / 4) / 2)) && avgy > h / 2 && avgy < (h / 2) + (h / 10) {app.state = .play}
+}
+
 fn main() {
 	$if android{
 		os.chdir('/storage/emulated/0/Android/data/com.hedgegod.chessgame')!
 	}
 
-	curves_quality := 4
+	curves_quality := 30
 	mut app := &App{}
 	app.new_game()
-	fen_utils.fen_2_board(mut app.board, '4k3/8/8/1r6/8/8/8/R3K2R w KQ - 0 1')
+	//fen_utils.fen_2_board(mut app.board, '4k3/8/8/1r6/8/8/8/R3K2R w KQ - 0 1')
 	font_path := $if android {'fonts/RobotoMono-Regular.ttf'} $else {os.resource_abs_path('assets/fonts/RobotoMono-Regular.ttf')}
 	app.gg = gg.new_context(
 		bg_color: gx.rgb(22, 21, 18)
