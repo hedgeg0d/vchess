@@ -36,6 +36,7 @@ struct App {
 	current_tile string
 	saver		 saving.Save
 	state		 State
+	is_white	 bool
 }
 
 struct Ui {
@@ -104,6 +105,7 @@ fn (mut app App) new_game() {
 	app.saver = saving.Save{}
 	app.saver.main_name = main_save_name
 	app.state = .menu
+	app.is_white = true
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
 			if y == 0 {
@@ -243,8 +245,9 @@ fn (mut app App) handle_tap_play() {
 	s, e := app.touch.start, app.touch.end
 	avgx, avgy := avg(s.pos.x, e.pos.x), avg(s.pos.y, e.pos.y)
 	width_unused, height_unused := app.ui.window_width - wt * 8, app.ui.window_height - ht * 8
-	tilex := (avgy - height_unused / 2) / (wt)
+	tilex := if app.is_white {(avgy - height_unused / 2) / (wt)} else {7 - ((avgy - height_unused / 2) / wt)}
 	tiley := (avgx - width_unused / 2) / (ht)
+	//mut ycord := if app.is_white {height_unused / 2} else {app.ui.window_height - height_unused / 2 - h}
 
 	if tilex > 7 || tiley > 7 || tilex < 0 || tiley < 0 {return}
 
@@ -441,7 +444,7 @@ fn (app &App) draw_field() {
 	w, h := math.min(app.ui.window_height / 8, app.ui.window_width / 8), math.min(app.ui.window_height / 8, app.ui.window_width / 8)
 	width_unused, height_unused := app.ui.window_width - w * 8, app.ui.window_height - h * 8
 	mut xcord := width_unused / 2
-	mut ycord := height_unused / 2
+	mut ycord := if app.is_white {height_unused / 2} else {app.ui.window_height - height_unused / 2 - h}
 	mut higlighted_l := [][]int{}
 	for i in app.board.highlighted_tiles {higlighted_l << cords.chessboard2xy(i)}
 	mut is_dark := false
@@ -492,7 +495,7 @@ fn (app &App) draw_field() {
 		}
 		is_dark = !is_dark
 		xcord = width_unused / 2
-		ycord += h
+		ycord = if app.is_white {ycord + h} else {ycord - h}
 	}
 }
 
@@ -507,12 +510,32 @@ fn (app &App) draw_menu() {
 	})
 	app.gg.draw_rounded_rect_filled(w / 2 - ((w / 4) / 2), h / 2, w / 4, h / 10, 10, gx.black)
 	app.gg.draw_rounded_rect_empty(w / 2 - ((w / 4) / 2), h / 2, w / 4, h / 10, 10, gx.white)
-	app.gg.draw_text(w / 2, h / 2 + h / 13, "Start game", gx.TextCfg{
+	app.gg.draw_text(w / 2, h / 2 + h / 20 + app.ui.font_size / 4, "Start game", gx.TextCfg{
 		color: gx.white
 		size: app.ui.font_size / 2
 		align: .center
 		vertical_align: .bottom
 	})
+	app.gg.draw_text(w / 2, h / 2 + h / 5, "Play as", gx.TextCfg{
+		color: gx.white
+		size: app.ui.font_size / 2
+		align: .center
+		vertical_align: .bottom
+	})
+	app.gg.draw_rounded_rect_filled(w / 2 - w / 8, h / 2 + h / 4, w / 4, h / 12, 10, gx.black)
+	app.gg.draw_rounded_rect_empty(w / 2 - w / 8, h / 2 + h / 4, w / 4, h / 12, 10, gx.white)
+	mut choice := if app.is_white {'white'} else {'black'}
+	app.gg.draw_text(w / 2, h / 2 + h / 4 + app.ui.font_size / 4 + h / 24, choice, gx.TextCfg{
+		color: gx.white
+		size: app.ui.font_size / 2
+		align: .center
+		vertical_align: .bottom
+	})
+
+	/*
+	x := w / 2 - (app.ui.font_size / 2 + app.ui.font_size / 5)
+	y := h / 2 + h / 3 - app.ui.font_size / 2
+	app.gg.draw_triangle_filled(x, y, x, y + app.ui.font_size / 2, x - app.ui.font_size / 2, avg(y, y + app.ui.font_size/2), gx.white)*/
 }
 
 
@@ -521,7 +544,9 @@ fn (mut app App) handle_tap_menu() {
 	mut w, mut h := app.ui.window_width, app.ui.window_height
 	s, e := app.touch.start, app.touch.end
 	avgx, avgy := avg(s.pos.x, e.pos.x), avg(s.pos.y, e.pos.y)
+	println('$avgx must be in ${(w / 2 - w / 8)}..${(w / 4)}. $avgy must be in ${(h / 2 + h / 4)}..${((h / 2 + h / 4) + h / 12)}')
 	if avgx > (w / 2 - ((w / 4) / 2)) && avgx < (w / 2 + ((w / 4) / 2)) && avgy > h / 2 && avgy < (h / 2) + (h / 10) {app.state = .play}
+	if avgx > (w / 2 - w / 8) && avgx < (w / 2 - w / 8) + (w / 4) && avgy > (h / 2 + h / 4) && avgy < ((h / 2 + h / 4) + h / 12) {app.is_white = !app.is_white}
 }
 
 fn main() {
