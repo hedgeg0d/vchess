@@ -264,8 +264,6 @@ fn (mut app App) handle_tap_play() {
 		}
 	}
 
-
-
 	if app.current_tile == '-'{
 		if app.board.field[tilex][tiley] != .nothing{
 			if app.board.is_white_move == app.board.field[tilex][tiley].is_white() {
@@ -298,10 +296,23 @@ fn (mut app App) handle_tap_play() {
 				if piece.is_pawn() && pieced.is_pawn() && pieced.is_enemy(piece) && cords.en_passant2xy(app.board.last_en_passant, app.board.is_white_move).reverse() == [piecedx, tiley]{app.board.kill(piecedx, tiley)}
 				if piece.is_pawn() && math.abs(oldcord[0] - tilex) > 1 {app.board.last_en_passant = cords.xy2chessboard(piecedx, tiley)} else {app.board.last_en_passant = '-'}
 			}
-			if oldcord == [7, 4] && [tilex, tiley] == [7, 2] {app.board.swap(7, 0, 7,  3)}
-			if oldcord == [0, 4] && [tilex, tiley] == [0, 2] {app.board.swap(0, 0, 0,  3)}
-			if oldcord == [7, 4] && [tilex, tiley] == [7, 6] {app.board.swap(7, 7, 7,  5)}
-			if oldcord == [0, 4] && [tilex, tiley] == [0, 6] {app.board.swap(0, 7, 0,  5)}
+			if piece.is_king() {
+				if piece.is_white() {app.board.white_short_castle_allowed = false
+					app.board.white_long_castle_allowed = false} else {app.board.black_short_castle_allowed = false
+					app.board.black_long_castle_allowed = false}
+			}
+			if oldcord == [7, 4] && [tilex, tiley] == [7, 2] {app.board.swap(7, 0, 7,  3)
+				app.board.white_long_castle_allowed = false
+				app.board.white_short_castle_allowed = false}
+			if oldcord == [0, 4] && [tilex, tiley] == [0, 2] {app.board.swap(0, 0, 0,  3)
+				app.board.black_long_castle_allowed = false
+				app.board.black_short_castle_allowed = false}
+			if oldcord == [7, 4] && [tilex, tiley] == [7, 6] {app.board.swap(7, 7, 7,  5)
+				app.board.white_short_castle_allowed = false
+				app.board.white_long_castle_allowed = false}
+			if oldcord == [0, 4] && [tilex, tiley] == [0, 6] {app.board.swap(0, 7, 0,  5)
+				app.board.black_short_castle_allowed = false
+				app.board.black_long_castle_allowed = false}
 			if piece.is_rook() {
 				if piece.is_white() {
 					if oldcord[0] == 7 && oldcord[1] == 7 {app.board.white_short_castle_allowed = false}
@@ -320,6 +331,8 @@ fn (mut app App) handle_tap_play() {
 			app.board.is_white_move = !app.board.is_white_move
 			app.board.current_fen = fen_utils.board_2_fen(app.board)
 			app.board.highlighted_tiles.clear()
+
+			app.saver.writen2save(app.board.current_fen)
 		}
 	}
 }

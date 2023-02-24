@@ -194,10 +194,10 @@ pub fn fen_2_board (mut board_ board.Board, fen string) {
 
 	if fen_parts[8] == 'w' {board_.is_white_move = true} else {board_.is_white_move = false}
 	tmp_parts := fen_parts[9].split('')
-	if 'k' in tmp_parts {board_.black_short_castle_allowed = true} else {board_.black_short_castle_allowed = false}
-	if 'q' in tmp_parts {board_.black_long_castle_allowed = true} else {board_.black_long_castle_allowed = false}
-	if 'K' in tmp_parts {board_.white_short_castle_allowed = true} else {board_.white_short_castle_allowed = false}
-	if 'Q' in tmp_parts {board_.white_long_castle_allowed = true} else {board_.white_long_castle_allowed = false}
+	board_.black_short_castle_allowed = 'k' in tmp_parts
+	board_.black_long_castle_allowed = 'q' in tmp_parts
+	board_.white_short_castle_allowed = 'K' in tmp_parts
+	board_.white_long_castle_allowed = 'Q' in tmp_parts
 	board_.last_en_passant = fen_parts[10]
 	board_.halfmove_clock = fen_parts[11].u16()
 	board_.fullmove_number = fen[12]
