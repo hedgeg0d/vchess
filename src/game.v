@@ -10,6 +10,7 @@ import figure_kind
 import board
 import cords
 import saving
+///import engine
 
 struct App {
 	mut:
@@ -37,6 +38,7 @@ struct App {
 	saver		 saving.Save
 	state		 State
 	is_white	 bool
+	//engine       engine.Engine
 }
 
 struct Ui {
@@ -106,6 +108,8 @@ fn (mut app App) new_game() {
 	app.saver.main_name = main_save_name
 	app.state = .menu
 	app.is_white = true
+	//app.engine.engine_name = 'stockfish'
+	//app.engine.path2engine = os.resource_abs_path('src/${app.engine.engine_name}')
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
 			if y == 0 {
@@ -481,7 +485,7 @@ fn (app &App) draw_field() {
 					vertical_align: .top
 				})
 			}
-			if y == 7 {
+			if (y == 7 && app.is_white) || (y == 0 && !app.is_white) {
 				app.gg.draw_text(xcord + w, ycord + h, '${cords.xy2chessboard(y, x)[0].ascii_str()}', gx.TextCfg {
 					color: if is_dark {tile_light} else {tile_dark}
 					size: app.ui.font_size / 3
@@ -544,7 +548,6 @@ fn (mut app App) handle_tap_menu() {
 	mut w, mut h := app.ui.window_width, app.ui.window_height
 	s, e := app.touch.start, app.touch.end
 	avgx, avgy := avg(s.pos.x, e.pos.x), avg(s.pos.y, e.pos.y)
-	println('$avgx must be in ${(w / 2 - w / 8)}..${(w / 4)}. $avgy must be in ${(h / 2 + h / 4)}..${((h / 2 + h / 4) + h / 12)}')
 	if avgx > (w / 2 - ((w / 4) / 2)) && avgx < (w / 2 + ((w / 4) / 2)) && avgy > h / 2 && avgy < (h / 2) + (h / 10) {app.state = .play}
 	if avgx > (w / 2 - w / 8) && avgx < (w / 2 - w / 8) + (w / 4) && avgy > (h / 2 + h / 4) && avgy < ((h / 2 + h / 4) + h / 12) {app.is_white = !app.is_white}
 }
