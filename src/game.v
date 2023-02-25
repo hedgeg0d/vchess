@@ -44,21 +44,15 @@ struct App {
 struct Ui {
 	mut:
 	dpi_scale     f32
-	tile_size     int
-	border_size   int
-	padding_size  int
-	header_size   int
 	font_size     int
 	window_width  int
 	window_height int
-	x_padding     int
-	y_padding     int
 }
 
 const (
     window_title = "VChess"
-	window_width= 800
-	window_height= 800
+	window_width= 1000
+	window_height= 1000
 	tile_light = gx.rgb(135, 157, 180)
 	tile_dark = gx.rgb(97, 120, 141)
 	highlighted_light = gx.rgb(72, 117, 110)
@@ -90,7 +84,7 @@ pub enum State {
 }
 
 
-fn (mut app App) new_game() {
+fn (mut app App) new_game(to_menu bool) {
 	app.board = board.Board{}
 	app.board.is_white_move = true
 	app.board.black_short_castle_allowed = true
@@ -106,7 +100,7 @@ fn (mut app App) new_game() {
 	app.current_tile = '-'
 	app.saver = saving.Save{}
 	app.saver.main_name = main_save_name
-	app.state = .menu
+	if to_menu {app.state = .menu} else {app.state = .play}
 	app.is_white = true
 	//app.engine.engine_name = 'stockfish'
 	//app.engine.path2engine = os.resource_abs_path('src/${app.engine.engine_name}')
@@ -173,18 +167,7 @@ fn (mut app App) resize() {
 	app.ui.dpi_scale = s
 	app.ui.window_width = w
 	app.ui.window_height = h
-	app.ui.padding_size = int(m / 38)
-	app.ui.header_size = app.ui.padding_size
-	app.ui.border_size = app.ui.padding_size * 2
-	app.ui.tile_size = int((m - app.ui.padding_size * 5 - app.ui.border_size * 2) / 4)
 	app.ui.font_size = int(m / 10)
-	if w > h {
-		app.ui.y_padding = 0
-		app.ui.x_padding = (app.ui.window_width - app.ui.window_height) / 2
-	} else {
-		app.ui.y_padding = (app.ui.window_height - app.ui.window_width - app.ui.header_size) / 2
-		app.ui.x_padding = 0
-	}
 }
 
 fn (mut app App) handle_swipe_play() {
@@ -192,7 +175,7 @@ fn (mut app App) handle_swipe_play() {
 	w, h := app.ui.window_width, app.ui.window_height
 	dx, dy := e.pos.x - s.pos.x, e.pos.y - s.pos.y
 	adx, ady := math.abs(dx), math.abs(dy)
-	dmin := if math.min(adx, ady) > 0 { math.min(adx, ady) } else { 1 }
+	//dmin := if math.min(adx, ady) > 0 { math.min(adx, ady) } else { 1 }
 	dmax := if math.max(adx, ady) > 0 { math.max(adx, ady) } else { 1 }
 	tdiff := int(e.time.unix_time_milli() - s.time.unix_time_milli())
 	min_swipe_distance := int(math.sqrt(math.min(w, h) * tdiff / 100)) + 20
@@ -224,10 +207,22 @@ fn (mut app App) on_key_down(key gg.KeyCode) {
 			}
 			app.current_tile = '-'
 			app.board.highlighted_tiles.clear()
+			app.board.current_fen = fen_utils.board_2_fen(app.board)
+			app.saver.writen2save(app.board.current_fen)
 		}
 		.r {
-			app.new_game()
+			app.new_game(false)
+			app.saver.writen2save('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
 		}
+		.m {app.new_game(true)}
+		else {}
+	}
+}
+
+fn (mut app App) on_key_menu(key gg.KeyCode) {
+	match key {
+		.enter {app.state = .play}
+		.space {app.state = .play}
 		else {}
 	}
 }
@@ -243,7 +238,6 @@ fn (mut app App) handle_touches() {
 }
 
 fn (mut app App) handle_tap_play() {
-	_, ypad := app.ui.x_padding, app.ui.y_padding
 	mut w, mut h := app.ui.window_width, app.ui.window_height
 	wt, ht := math.min(w / 8, h / 8), math.min(w / 8, h / 8)
 	s, e := app.touch.start, app.touch.end
@@ -339,12 +333,8 @@ fn (mut app App) handle_tap_play() {
 
 fn on_event(e &gg.Event, mut app App) {
 	match e.typ {
-		.key_down {
-			app.on_key_down(e.key_code)
-		}
-		.resized, .restored, .resumed {
-			app.resize()
-		}
+		.key_down {if app.state == .play {app.on_key_down(e.key_code)} else {app.on_key_menu(e.key_code)}}
+		.resized, .restored, .resumed {app.resize()}
 		.touches_began {
 			if e.num_touches > 0 {
 				t := e.touches[0]
@@ -353,9 +343,9 @@ fn on_event(e &gg.Event, mut app App) {
 						x: int(t.pos_x / app.ui.dpi_scale)
 						y: int(t.pos_y / app.ui.dpi_scale)
 					}
-					time: time.now()
-				}
+					time: time.now()}
 			}
+
 		}
 		.touches_ended {
 			if e.num_touches > 0 {
@@ -557,7 +547,6 @@ fn (app &App) draw_menu() {
 
 
 fn (mut app App) handle_tap_menu() {
-	_, ypad := app.ui.x_padding, app.ui.y_padding
 	mut w, mut h := app.ui.window_width, app.ui.window_height
 	s, e := app.touch.start, app.touch.end
 	avgx, avgy := avg(s.pos.x, e.pos.x), avg(s.pos.y, e.pos.y)
@@ -566,13 +555,11 @@ fn (mut app App) handle_tap_menu() {
 }
 
 fn main() {
-	$if android{
-		os.chdir('/storage/emulated/0/Android/data/com.hedgegod.chessgame')!
-	}
-
+	$if android{os.chdir('/storage/emulated/0/Android/data/com.hedgegod.chessgame')!}
 	curves_quality := 30
 	mut app := &App{}
-	app.new_game()
+	app.new_game(true)
+	app.saver.load_save(mut app.board)
 	//fen_utils.fen_2_board(mut app.board, '4k3/8/8/1r6/8/8/8/R3K2R w KQ - 0 1')
 	font_path := $if android {'fonts/RobotoMono-Regular.ttf'} $else {os.resource_abs_path('assets/fonts/RobotoMono-Regular.ttf')}
 	app.gg = gg.new_context(
