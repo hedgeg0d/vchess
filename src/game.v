@@ -38,6 +38,8 @@ struct App {
 	saver		 saving.Save
 	state		 State
 	is_white	 bool
+	theme_index	 u8
+	theme		 &Theme = themes[0]
 	//engine       engine.Engine
 }
 
@@ -49,15 +51,62 @@ struct Ui {
 	window_height int
 }
 
+struct Theme {
+	background_color		gx.Color
+	button_main_color		gx.Color
+	button_second_color		gx.Color
+	light_tile_color		gx.Color
+	dark_tile_color			gx.Color
+	highlighted_light_color gx.Color
+	highlighted_dark_color	gx.Color
+	menu_font_color			gx.Color
+	path2background_android string
+	path2background			string
+}
+
 const (
     window_title = "VChess"
 	window_width= 1000
 	window_height= 1000
-	tile_light = gx.rgb(135, 157, 180)
-	tile_dark = gx.rgb(97, 120, 141)
-	highlighted_light = gx.rgb(72, 117, 110)
-	highlighted_dark = gx.rgb(57, 100, 94)
 	main_save_name = 'SAVEFILE'
+	themes = [
+		&Theme{
+			background_color: gx.rgb(7, 3, 61)
+			button_main_color: gx.rgb(10, 5, 80)
+			button_second_color: gx.white
+			light_tile_color: gx.rgb(135, 157, 180)
+			dark_tile_color: gx.rgb(97, 120, 141)
+			highlighted_light_color: gx.rgb(72, 117, 110)
+			highlighted_dark_color: gx.rgb(57, 100, 94)
+			menu_font_color: gx.white
+			path2background_android: 'menu/background.jpg'
+			path2background: 'assets/menu/background.jpg'
+		}
+		&Theme{
+			background_color: gx.rgb(22, 21, 18)
+			button_main_color: gx.black
+			button_second_color: gx.white
+			light_tile_color: gx.rgb(166, 168, 178)
+			dark_tile_color: gx.rgb(69, 70, 81)
+			highlighted_light_color: gx.rgb(114, 128, 140)
+			highlighted_dark_color: gx.rgb(107, 110, 124)
+			menu_font_color: gx.white
+			path2background_android: 'menu/background1.jpg'
+			path2background: 'assets/menu/background1.jpg'
+		}
+		&Theme{
+			background_color: gx.rgb(75, 7, 50)
+			button_main_color: gx.magenta
+			button_second_color: gx.pink
+			light_tile_color: gx.rgb(205, 176, 207)
+			dark_tile_color: gx.rgb(109, 45, 80)
+			highlighted_light_color: gx.rgb(208, 54, 158)
+			highlighted_dark_color: gx.rgb(207, 91, 193)
+			menu_font_color: gx.white
+			path2background_android: 'menu/background2.jpg'
+			path2background: 'assets/menu/background2.jpg'
+		}
+	]
 )
 
 struct Pos {
@@ -148,6 +197,23 @@ pub fn (mut app App) undo_move() {
 }
 
 [inline]
+fn (mut app App) set_theme(idx int) {
+	theme := themes[idx]
+	app.theme_index = u8(idx)
+	app.theme = theme
+	app.gg.set_bg_color(theme.background_color)
+	$if android {
+		new_bg := os.read_apk_asset(app.theme.path2background_android) or {panic(err)}
+		app.m_background = new_bg
+	} $else {app.m_background = app.gg.create_image(os.resource_abs_path(app.theme.path2background))}
+}
+
+[inline]
+fn (mut app App) next_theme() {
+	app.set_theme(if app.theme_index == themes.len - 1 { 0 } else { app.theme_index + 1 })
+}
+
+[inline]
 fn avg(a int, b int) int {
 	return (a + b) / 2
 }
@@ -215,6 +281,7 @@ fn (mut app App) on_key_down(key gg.KeyCode) {
 			app.saver.writen2save('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
 		}
 		.m {app.new_game(true)}
+		.t {app.next_theme()}
 		else {}
 	}
 }
@@ -223,6 +290,7 @@ fn (mut app App) on_key_menu(key gg.KeyCode) {
 	match key {
 		.enter {app.state = .play}
 		.space {app.state = .play}
+		.t {app.next_theme()}
 		else {}
 	}
 }
@@ -410,7 +478,7 @@ fn init_images(mut app App) {
 		app.rook_black = app.gg.create_image_from_byte_array(rook_black)
 		app.queen_black = app.gg.create_image_from_byte_array(queen_black)
 		app.king_black = app.gg.create_image_from_byte_array(king_black)
-		menu_background := os.read_apk_asset('menu/background1.jpg') or {panic(err)}
+		menu_background := os.read_apk_asset(app.theme.path2background_android) or {panic(err)}
 		app.m_background = app.gg.create_image_from_byte_array(menu_background)
 	} $else {
 		app.pawn_white = app.gg.create_image(os.resource_abs_path('assets/white/pawn.png'))
@@ -427,7 +495,7 @@ fn init_images(mut app App) {
 		app.queen_black = app.gg.create_image(os.resource_abs_path('assets/black/queen.png'))
 		app.king_black = app.gg.create_image(os.resource_abs_path('assets/black/king.png'))
 
-		app.m_background = app.gg.create_image(os.resource_abs_path('assets/menu/background1.jpg'))
+		app.m_background = app.gg.create_image(os.resource_abs_path(app.theme.path2background))
 	}
 }
 
@@ -458,10 +526,10 @@ fn (app &App) draw_field() {
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
 			if app.current_tile != '-' && ([y, x] == cords.chessboard2xy(app.current_tile)) {
-				app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {highlighted_dark} else {highlighted_light})
+				app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {app.theme.highlighted_dark_color} else {app.theme.highlighted_light_color})
 			} else {
-				if [y, x] in higlighted_l && (app.board.field[y][x] == .nothing || app.board.field[cords.chessboard2xy(app.current_tile)[0]][cords.chessboard2xy(app.current_tile)[1]].is_enemy(app.board.field[y][x])) {app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {highlighted_dark} else {highlighted_light})} else {
-					app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {tile_dark} else {tile_light})
+				if [y, x] in higlighted_l && (app.board.field[y][x] == .nothing || app.board.field[cords.chessboard2xy(app.current_tile)[0]][cords.chessboard2xy(app.current_tile)[1]].is_enemy(app.board.field[y][x])) {app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {app.theme.highlighted_dark_color} else {app.theme.highlighted_light_color})} else {
+					app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {app.theme.dark_tile_color} else {app.theme.light_tile_color})
 				}
 			}
 			match app.board.field[y][x] {
@@ -482,7 +550,7 @@ fn (app &App) draw_field() {
 			}
 			if x == 0 {
 				app.gg.draw_text(xcord, ycord, "${8 - y}", gx.TextCfg {
-					color: if is_dark {tile_light} else {tile_dark}
+					color: if is_dark {app.theme.light_tile_color} else {app.theme.dark_tile_color}
 					size: app.ui.font_size / 3
 					align: .left
 					vertical_align: .top
@@ -490,7 +558,7 @@ fn (app &App) draw_field() {
 			}
 			if (y == 7 && app.is_white) || (y == 0 && !app.is_white) {
 				app.gg.draw_text(xcord + w, ycord + h, '${cords.xy2chessboard(y, x)[0].ascii_str()}', gx.TextCfg {
-					color: if is_dark {tile_light} else {tile_dark}
+					color: if is_dark {app.theme.light_tile_color} else {app.theme.dark_tile_color}
 					size: app.ui.font_size / 3
 					align: .right
 					vertical_align: .bottom
@@ -515,8 +583,8 @@ fn (app &App) draw_menu() {
 		align: .center
 		vertical_align: .bottom
 	})
-	app.gg.draw_rounded_rect_filled(w / 2 - ((w / 4) / 2), h / 2, w / 4, h / 10, 10, gx.black)
-	app.gg.draw_rounded_rect_empty(w / 2 - ((w / 4) / 2), h / 2, w / 4, h / 10, 10, gx.white)
+	app.gg.draw_rounded_rect_filled(w / 2 - ((w / 4) / 2), h / 2, w / 4, h / 10, 10, app.theme.button_main_color)
+	app.gg.draw_rounded_rect_empty(w / 2 - ((w / 4) / 2), h / 2, w / 4, h / 10, 10, app.theme.button_second_color)
 	app.gg.draw_text(w / 2, h / 2 + h / 20 + app.ui.font_size / 4, "Start game", gx.TextCfg{
 		color: gx.white
 		size: app.ui.font_size / 2
@@ -529,8 +597,8 @@ fn (app &App) draw_menu() {
 		align: .center
 		vertical_align: .bottom
 	})
-	app.gg.draw_rounded_rect_filled(w / 2 - w / 8, h / 2 + h / 4, w / 4, h / 12, 10, gx.black)
-	app.gg.draw_rounded_rect_empty(w / 2 - w / 8, h / 2 + h / 4, w / 4, h / 12, 10, gx.white)
+	app.gg.draw_rounded_rect_filled(w / 2 - w / 8, h / 2 + h / 4, w / 4, h / 12, 10, app.theme.button_main_color)
+	app.gg.draw_rounded_rect_empty(w / 2 - w / 8, h / 2 + h / 4, w / 4, h / 12, 10, app.theme.button_second_color)
 	mut choice := if app.is_white {'white'} else {'black'}
 	app.gg.draw_text(w / 2, h / 2 + h / 4 + app.ui.font_size / 4 + h / 24, choice, gx.TextCfg{
 		color: gx.white
@@ -563,7 +631,7 @@ fn main() {
 	//fen_utils.fen_2_board(mut app.board, '4k3/8/8/1r6/8/8/8/R3K2R w KQ - 0 1')
 	font_path := $if android {'fonts/RobotoMono-Regular.ttf'} $else {os.resource_abs_path('assets/fonts/RobotoMono-Regular.ttf')}
 	app.gg = gg.new_context(
-		bg_color: gx.rgb(22, 21, 18)
+		bg_color: app.theme.background_color
 		width: window_width
 		height: window_height
 		sample_count: curves_quality
