@@ -653,6 +653,14 @@ fn (app &App) draw_menu() {
 		vertical_align: .bottom
 	})
 
+	app.gg.draw_rounded_rect_filled(3, 3, w / 15, h / 15, 10, app.theme.button_main_color)
+	app.gg.draw_rounded_rect_empty(3, 3, w / 15, h / 15, 10, app.theme.button_second_color)
+	app.gg.draw_text(avg(3, w / 15), int(f32(avg(3, h / 15)) * 1.4), 'Theme', gx.TextCfg{
+		color: app.theme.menu_font_color
+		size: app.ui.font_size / 4
+		align: .center
+		vertical_align: .bottom
+	})
 	/*
 	x := w / 2 - (app.ui.font_size / 2 + app.ui.font_size / 5)
 	y := h / 2 + h / 3 - app.ui.font_size / 2
@@ -665,7 +673,8 @@ fn (mut app App) handle_tap_menu() {
 	s, e := app.touch.start, app.touch.end
 	avgx, avgy := avg(s.pos.x, e.pos.x), avg(s.pos.y, e.pos.y)
 	if avgx > (w / 2 - ((w / 4) / 2)) && avgx < (w / 2 + ((w / 4) / 2)) && avgy > h / 2 && avgy < (h / 2) + (h / 10) {app.state = .play}
-	if avgx > (w / 2 - w / 8) && avgx < (w / 2 - w / 8) + (w / 4) && avgy > (h / 2 + h / 4) && avgy < ((h / 2 + h / 4) + h / 12) {app.is_white = !app.is_white}
+	else if avgx > (w / 2 - w / 8) && avgx < (w / 2 - w / 8) + (w / 4) && avgy > (h / 2 + h / 4) && avgy < ((h / 2 + h / 4) + h / 12) {app.is_white = !app.is_white}
+	else if avgx > 3 && avgx < 3 + w / 15 && avgy > 3 && avgy < 3 + h / 15 {app.next_theme()}
 }
 
 fn main() {
