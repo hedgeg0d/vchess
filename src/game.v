@@ -66,8 +66,8 @@ struct Theme {
 
 const (
     window_title = "VChess"
-	window_width= 1000
-	window_height= 1000
+	window_width= 800
+	window_height= 800
 	main_save_name = 'SAVEFILE'
 	themes = [
 		&Theme{
@@ -281,6 +281,7 @@ fn (mut app App) on_key_down(key gg.KeyCode) {
 			app.saver.writen2save('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
 		}
 		.m {app.new_game(true)}
+		.escape {app.new_game(true)}
 		.t {app.next_theme()}
 		else {}
 	}
@@ -313,6 +314,7 @@ fn (mut app App) handle_tap_play() {
 	width_unused, height_unused := app.ui.window_width - wt * 8, app.ui.window_height - ht * 8
 	tilex := if app.is_white {(avgy - height_unused / 2) / (wt)} else {7 - ((avgy - height_unused / 2) / wt)}
 	tiley := (avgx - width_unused / 2) / (ht)
+	app.check_additional_touches(width_unused, height_unused, avgx, avgy)
 	//mut ycord := if app.is_white {height_unused / 2} else {app.ui.window_height - height_unused / 2 - h}
 
 	if tilex > 7 || tiley > 7 || tilex < 0 || tiley < 0 {return}
@@ -571,6 +573,50 @@ fn (app &App) draw_field() {
 		is_dark = !is_dark
 		xcord = width_unused / 2
 		ycord = if app.is_white {ycord + h} else {ycord - h}
+
+	}
+	app.draw_additional_buttons(width_unused, height_unused)
+}
+
+fn (app &App) draw_additional_buttons(width_unused int, height_unused int) {
+	if width_unused > height_unused {
+		if width_unused > app.ui.window_width / 6 {
+			paddingx := width_unused / 20
+			paddingy := app.ui.window_height / 40
+			app.gg.draw_rounded_rect_filled(paddingx, paddingy, width_unused / 2 - paddingx * 2, app.ui.window_height / 2 - paddingy, 10, app.theme.button_main_color)
+			app.gg.draw_rounded_rect_empty(paddingx, paddingy, width_unused  / 2 - paddingx * 2, app.ui.window_height / 2 - paddingy, 10, app.theme.button_second_color)
+			app.gg.draw_rounded_rect_filled(paddingx, paddingy * 2 + app.ui.window_height / 2 - paddingy, width_unused / 2 - paddingx * 2, app.ui.window_height / 2 - paddingy * 2, 10, app.theme.button_main_color)
+			app.gg.draw_rounded_rect_empty(paddingx, paddingy * 2 + app.ui.window_height / 2 - paddingy, width_unused  / 2 - paddingx * 2, app.ui.window_height / 2 - paddingy * 2, 10, app.theme.button_second_color)
+		}
+	} else {
+		if height_unused > app.ui.window_height / 6 {
+			paddingx := app.ui.window_width / 40
+			y := app.ui.window_height - height_unused / 2
+			paddingy := height_unused / 20
+			app.gg.draw_rounded_rect_filled(paddingx, y + paddingy, app.ui.window_width / 2 - paddingx, height_unused / 2 - paddingy * 2, 10, app.theme.button_main_color)
+			app.gg.draw_rounded_rect_empty(paddingx, y + paddingy, app.ui.window_width / 2 - paddingx, height_unused / 2 - paddingy * 2, 10, app.theme.button_second_color)
+			app.gg.draw_rounded_rect_filled(paddingx * 2 + app.ui.window_width / 2 - paddingx, y + paddingy, app.ui.window_width / 2 - paddingx * 2, height_unused / 2 - paddingy * 2, 10, app.theme.button_main_color)
+			app.gg.draw_rounded_rect_empty(paddingx * 2 + app.ui.window_width / 2 - paddingx, y + paddingy, app.ui.window_width / 2 - paddingx * 2, height_unused / 2 - paddingy * 2, 10, app.theme.button_second_color)
+		}
+	}
+}
+
+fn (mut app App) check_additional_touches(width_unused int, height_unused int, avgx int, avgy int) {
+	if width_unused > height_unused {
+		if width_unused > app.ui.window_width / 6 {
+			paddingx := width_unused / 20
+			paddingy := app.ui.window_height / 40
+			if avgx > paddingx && avgx < (paddingx + (width_unused / 2 - paddingx * 2)) && avgy > paddingy && avgy < (paddingy + (app.ui.window_height / 2 - paddingy)) {app.new_game(true)}
+			if avgx > paddingx && avgx < (paddingx + (width_unused / 2 - paddingx * 2)) && avgy > paddingy * 2 + app.ui.window_height / 2 - paddingy && avgy < (paddingy * 2 + app.ui.window_height / 2 - paddingy + (app.ui.window_height / 2 - paddingy * 2)) {app.undo_move()}
+		}
+	} else {
+		if height_unused > app.ui.window_height / 6 {
+			paddingx := app.ui.window_width / 40
+			y := app.ui.window_height - height_unused / 2
+			paddingy := height_unused / 20
+			if avgx > paddingx && avgx < (paddingx + (app.ui.window_width / 2 - paddingx)) && avgy > y + paddingy && avgy < (y + paddingy + (height_unused / 2 - paddingy * 2)) {app.new_game(true)}
+			if avgx > (paddingx * 2 + app.ui.window_width / 2 - paddingx) && avgx < (paddingx * 2 + app.ui.window_width / 2 - paddingx + app.ui.window_width / 2 - paddingx * 2) && avgy > y + paddingy && avgy < (y + paddingy + (height_unused / 2 - paddingy * 2)) {app.undo_move()}
+		}
 	}
 }
 
