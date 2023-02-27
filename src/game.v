@@ -185,7 +185,7 @@ fn (mut app App) new_game(to_menu bool) {
 			}
 		}
 	}
-	app.undo = []string{cap: 4096}
+	app.undo = []string{cap: 8192}
 	app.moves = 0
 }
 
@@ -194,6 +194,7 @@ pub fn (mut app App) undo_move() {
 	if app.undo.len < 1 {return}
 	fen_utils.fen_2_board(mut app.board, app.undo.last())
 	app.undo.delete_last()
+	app.current_tile = '-'
 }
 
 [inline]
@@ -204,7 +205,7 @@ fn (mut app App) set_theme(idx int) {
 	app.gg.set_bg_color(theme.background_color)
 	$if android {
 		new_bg := os.read_apk_asset(app.theme.path2background_android) or {panic(err)}
-		app.m_background = new_bg
+		app.m_background = app.gg.create_image_from_byte_array(new_bg)
 	} $else {app.m_background = app.gg.create_image(os.resource_abs_path(app.theme.path2background))}
 }
 
