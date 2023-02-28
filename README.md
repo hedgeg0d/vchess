@@ -2,7 +2,7 @@
 Chess game written in V programming language(in development)
 
 ## Disclaimer ⚠️
-**The game is unfinished and unplayable now, but the work is in progress.
+**The game is unfinished and unplayable now, but the work is in process.
   My code is definteley terribly formated now, i will use v fmt later**
 
 ### Build🔨
