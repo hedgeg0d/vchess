@@ -200,5 +200,5 @@ pub fn fen_2_board (mut board_ board.Board, fen string) {
 	board_.white_long_castle_allowed = 'Q' in tmp_parts
 	board_.last_en_passant = fen_parts[10]
 	board_.halfmove_clock = fen_parts[11].u16()
-	board_.fullmove_number = fen[12]
+	board_.fullmove_number = fen_parts[12].u16()
 }

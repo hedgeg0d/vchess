@@ -195,6 +195,7 @@ pub fn (mut app App) undo_move() {
 	fen_utils.fen_2_board(mut app.board, app.undo.last())
 	app.undo.delete_last()
 	app.current_tile = '-'
+	app.board.fullmove_number--
 }
 
 [inline]
@@ -266,9 +267,16 @@ fn (mut app App) handle_swipe_menu() {
 
 
 fn (mut app App) on_key_down(key gg.KeyCode) {
+	if app.state == .end {
+		app.new_game(true)
+		return
+	}
 	match key {
 		.backspace {
-			if app.undo.len == 0 {fen_utils.fen_2_board(mut app.board, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')} else {
+			if app.undo.len == 0 {
+				fen_utils.fen_2_board(mut app.board, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+				app.board.fullmove_number = 1
+			} else {
 				fen_utils.fen_2_board(mut app.board, app.undo.last())
 				app.undo.delete_last()
 			}
@@ -284,6 +292,9 @@ fn (mut app App) on_key_down(key gg.KeyCode) {
 		.m {app.new_game(true)}
 		.escape {app.new_game(true)}
 		.t {app.next_theme()}
+		.e {
+			app.state = .end
+		}
 		else {}
 	}
 }
@@ -404,7 +415,7 @@ fn (mut app App) handle_tap_play() {
 
 fn on_event(e &gg.Event, mut app App) {
 	match e.typ {
-		.key_down {if app.state == .play {app.on_key_down(e.key_code)} else {app.on_key_menu(e.key_code)}}
+		.key_down {if app.state == .play || app.state == .end {app.on_key_down(e.key_code)} else {app.on_key_menu(e.key_code)}}
 		.resized, .restored, .resumed {app.resize()}
 		.touches_began {
 			if e.num_touches > 0 {
@@ -513,7 +524,7 @@ fn (mut app App) print_field() {
 
 fn frame(app &App) {
 	app.gg.begin()
-	if app.state == .play {app.draw_field()}
+	if app.state == .play || app.state == .end {app.draw_field()}
 	if app.state == .menu {app.draw_menu()}
 	app.gg.end()
 }
@@ -577,6 +588,7 @@ fn (app &App) draw_field() {
 
 	}
 	app.draw_additional_buttons(width_unused, height_unused)
+	app.draw_final_screen(false)
 }
 
 fn (app &App) draw_additional_buttons(width_unused int, height_unused int) {
@@ -600,6 +612,38 @@ fn (app &App) draw_additional_buttons(width_unused int, height_unused int) {
 			app.gg.draw_rounded_rect_empty(paddingx * 2 + app.ui.window_width / 2 - paddingx, y + paddingy, app.ui.window_width / 2 - paddingx * 2, height_unused / 2 - paddingy * 2, 10, app.theme.button_second_color)
 		}
 	}
+}
+
+fn (app &App) draw_final_screen(is_white_victory bool) {
+	if app.state != .end {return}
+	y := app.ui.window_height / 3
+	paddingy := app.ui.window_height / 15
+	app.gg.draw_rect_filled(0, 0, app.ui.window_width, app.ui.window_height, gx.rgba(0, 0, 0, 200))
+	app.gg.draw_text(app.ui.window_width / 2, y, "Game finished", gx.TextCfg{
+		color: gx.white
+		size: app.ui.font_size / 2
+		align: .center
+		vertical_align: .bottom
+	})
+	victor := if is_white_victory {'White'} else {'Black'}
+	app.gg.draw_text(app.ui.window_width / 2, y + paddingy, "$victor won", gx.TextCfg{
+		color: gx.white
+		size: app.ui.font_size / 3
+		align: .center
+		vertical_align: .bottom
+	})
+	app.gg.draw_text(app.ui.window_width / 2, (y + paddingy) * 2, "Moves done: ${app.board.fullmove_number}", gx.TextCfg{
+		color: gx.white
+		size: app.ui.font_size / 3
+		align: .center
+		vertical_align: .bottom
+	})
+	app.gg.draw_text(app.ui.window_width / 2, y + paddingy * 10, "Press any button to continue", gx.TextCfg{
+		color: gx.white
+		size: app.ui.font_size / 3
+		align: .center
+		vertical_align: .bottom
+	})
 }
 
 fn (mut app App) check_additional_touches(width_unused int, height_unused int, avgx int, avgy int) {
@@ -656,7 +700,7 @@ fn (app &App) draw_menu() {
 
 	app.gg.draw_rounded_rect_filled(3, 3, w / 15, h / 15, 10, app.theme.button_main_color)
 	app.gg.draw_rounded_rect_empty(3, 3, w / 15, h / 15, 10, app.theme.button_second_color)
-	app.gg.draw_text(avg(3, w / 15), int(f32(avg(3, h / 15)) * 1.4), 'Theme', gx.TextCfg{
+	app.gg.draw_text(avg(3, w / 15), 3 + app.ui.font_size / 4 + h / 36, 'Theme', gx.TextCfg{
 		color: app.theme.menu_font_color
 		size: app.ui.font_size / 4
 		align: .center
@@ -698,6 +742,7 @@ fn main() {
 		event_fn: on_event
 		frame_fn: frame
 		init_fn: init_images
+		fullscreen: $if android {true} $else {false}
 	)
 	app.gg.run()
 }
