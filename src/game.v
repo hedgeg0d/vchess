@@ -14,33 +14,33 @@ import saving
 
 struct App {
 	mut:
-	gg           &gg.Context = unsafe { nil }
-	touch        TouchInfo
-	ui           Ui
-	board        board.Board
-	undo         []string
-	atickers     [5][5]int
-	moves        int
-	pawn_white   gg.Image
-	knight_white gg.Image
-	bishop_white gg.Image
-	rook_white   gg.Image
-	queen_white  gg.Image
-	king_white   gg.Image
-	pawn_black   gg.Image
-	knight_black gg.Image
-	bishop_black gg.Image
-	rook_black   gg.Image
-	queen_black  gg.Image
-	king_black   gg.Image
-	m_background gg.Image
-	current_tile string
-	saver		 saving.Save
-	state		 State
-	is_white	 bool
-	theme_index	 u8
-	theme		 &Theme = themes[0]
-	//engine       engine.Engine
+	gg           	&gg.Context = unsafe { nil }
+	touch        	TouchInfo
+	ui           	Ui
+	board        	board.Board
+	undo         	[]string
+	atickers     	[5][5]int
+	moves        	int
+	pawn_white   	gg.Image
+	knight_white 	gg.Image
+	bishop_white	gg.Image
+	rook_white  	gg.Image
+	queen_white  	gg.Image
+	king_white  	gg.Image
+	pawn_black   	gg.Image
+	knight_black 	gg.Image
+	bishop_black	gg.Image
+	rook_black   	gg.Image
+	queen_black  	gg.Image
+	king_black   	gg.Image
+	m_background 	gg.Image
+	current_tile 	string
+	saver		 	saving.Save
+	state		 	State
+	is_white	 	bool
+	theme_index	 	u8
+	theme		 	&Theme = themes[0]
+	//engine       	engine.Engine
 }
 
 struct Ui {
@@ -96,7 +96,7 @@ const (
 		}
 		&Theme{
 			background_color: gx.rgb(75, 7, 50)
-			button_main_color: gx.magenta
+			button_main_color: gx.rgb(109, 45, 80)
 			button_second_color: gx.pink
 			light_tile_color: gx.rgb(205, 176, 207)
 			dark_tile_color: gx.rgb(109, 45, 80)
@@ -293,7 +293,7 @@ fn (mut app App) on_key_down(key gg.KeyCode) {
 		.escape {app.new_game(true)}
 		.t {app.next_theme()}
 		.e {
-			app.state = .end
+			println(app.board.last_en_passant)
 		}
 		else {}
 	}
@@ -369,26 +369,27 @@ fn (mut app App) handle_tap_play() {
 			piecedx := if app.board.is_white_move {tilex + 1} else {tilex - 1}
 			if is_valid([piecedx, tiley]) {
 				pieced := app.board.field[piecedx][tiley]
-				if piece.is_pawn() && pieced.is_pawn() && pieced.is_enemy(piece) && cords.en_passant2xy(app.board.last_en_passant, app.board.is_white_move).reverse() == [piecedx, tiley]{app.board.kill(piecedx, tiley)}
+				if app.board.last_en_passant != '-' {if piece.is_pawn() && pieced.is_pawn() && pieced.is_enemy(piece) && cords.en_passant2xy(app.board.last_en_passant, app.board.is_white_move).reverse() == [piecedx, tiley]{app.board.kill(piecedx, tiley)}}
 				if piece.is_pawn() && math.abs(oldcord[0] - tilex) > 1 {app.board.last_en_passant = cords.xy2chessboard(piecedx, tiley)} else {app.board.last_en_passant = '-'}
 			}
 			if piece.is_king() {
 				if piece.is_white() {app.board.white_short_castle_allowed = false
 					app.board.white_long_castle_allowed = false} else {app.board.black_short_castle_allowed = false
 					app.board.black_long_castle_allowed = false}
+
+				if oldcord == [7, 4] && [tilex, tiley] == [7, 2] {app.board.swap(7, 0, 7,  3)
+					app.board.white_long_castle_allowed = false
+					app.board.white_short_castle_allowed = false}
+				if oldcord == [0, 4] && [tilex, tiley] == [0, 2] {app.board.swap(0, 0, 0,  3)
+					app.board.black_long_castle_allowed = false
+					app.board.black_short_castle_allowed = false}
+				if oldcord == [7, 4] && [tilex, tiley] == [7, 6] {app.board.swap(7, 7, 7,  5)
+					app.board.white_short_castle_allowed = false
+					app.board.white_long_castle_allowed = false}
+				if oldcord == [0, 4] && [tilex, tiley] == [0, 6] {app.board.swap(0, 7, 0,  5)
+					app.board.black_short_castle_allowed = false
+					app.board.black_long_castle_allowed = false}
 			}
-			if oldcord == [7, 4] && [tilex, tiley] == [7, 2] {app.board.swap(7, 0, 7,  3)
-				app.board.white_long_castle_allowed = false
-				app.board.white_short_castle_allowed = false}
-			if oldcord == [0, 4] && [tilex, tiley] == [0, 2] {app.board.swap(0, 0, 0,  3)
-				app.board.black_long_castle_allowed = false
-				app.board.black_short_castle_allowed = false}
-			if oldcord == [7, 4] && [tilex, tiley] == [7, 6] {app.board.swap(7, 7, 7,  5)
-				app.board.white_short_castle_allowed = false
-				app.board.white_long_castle_allowed = false}
-			if oldcord == [0, 4] && [tilex, tiley] == [0, 6] {app.board.swap(0, 7, 0,  5)
-				app.board.black_short_castle_allowed = false
-				app.board.black_long_castle_allowed = false}
 			if piece.is_rook() {
 				if piece.is_white() {
 					if oldcord[0] == 7 && oldcord[1] == 7 {app.board.white_short_castle_allowed = false}
