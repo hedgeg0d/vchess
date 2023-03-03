@@ -293,6 +293,8 @@ fn (mut app App) on_key_down(key gg.KeyCode) {
 		.escape {app.new_game(true)}
 		.t {app.next_theme()}
 		.e {
+			for i in app.board.get_reachable_fields(true) {println(cords.xy2chessboard(i[0], i[1]))}
+			app.saver.get_undoes()
 			println(app.board.last_en_passant)
 		}
 		else {}
@@ -542,10 +544,8 @@ fn (app &App) draw_field() {
 		for x in 0 .. 8 {
 			if app.current_tile != '-' && ([y, x] == cords.chessboard2xy(app.current_tile)) {
 				app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {app.theme.highlighted_dark_color} else {app.theme.highlighted_light_color})
-			} else {
-				if [y, x] in higlighted_l && (app.board.field[y][x] == .nothing || app.board.field[cords.chessboard2xy(app.current_tile)[0]][cords.chessboard2xy(app.current_tile)[1]].is_enemy(app.board.field[y][x])) {app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {app.theme.highlighted_dark_color} else {app.theme.highlighted_light_color})} else {
+			} else if [y, x] in higlighted_l && (app.board.field[y][x] == .nothing || app.board.field[cords.chessboard2xy(app.current_tile)[0]][cords.chessboard2xy(app.current_tile)[1]].is_enemy(app.board.field[y][x])) {app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {app.theme.highlighted_dark_color} else {app.theme.highlighted_light_color})} else {
 					app.gg.draw_rect_filled(xcord, ycord, w, h, if is_dark {app.theme.dark_tile_color} else {app.theme.light_tile_color})
-				}
 			}
 			match app.board.field[y][x] {
 				.pawn_white {app.gg.draw_image(xcord, ycord, w, h, app.pawn_white)}

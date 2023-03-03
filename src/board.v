@@ -118,9 +118,9 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		}
 	}
 
-	if field.is_knight() {
-		if !(field.is_black() && (y == 1 || y == 6)) {
-
+	else if field.is_knight() {
+		println(y)
+		if !(field.is_black() && x == 0) {
 			results << [[x - 2, y + 1]]
 			results << [[x - 2, y - 1]]
 		}
@@ -130,21 +130,9 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		results << [[x - 1, y - 2]]
 		results << [[x + 1, y + 2]]
 		results << [[x + 1, y - 2]]
-		/*return [
-			if !(field.is_black() && (x == 1 || x == 6)) {
-				cords.xy2chessboard(x - 2, y + 1)
-				cords.xy2chessboard(x - 2, y - 1)}
-			cords.xy2chessboard(x + 2, y + 1)
-			cords.xy2chessboard(x + 2, y - 1)
-
-			cords.xy2chessboard(x - 1, y + 2)
-			cords.xy2chessboard(x - 1, y - 2)
-			cords.xy2chessboard(x + 1, y + 2)
-			cords.xy2chessboard(x + 1, y - 2)
-		]*/
 	}
 
-	if field.is_king() {
+	else if field.is_king() {
 		results << [[x + 1, y]]
 		results << [[x - 1, y]]
 		results << [[x, y + 1]]
@@ -172,7 +160,7 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		}
 	}
 
-	if field.is_rook() {
+	else if field.is_rook() {
 		mut nx := x
 		self := board.field[x][y]
 		for nx < 7 {
@@ -204,7 +192,7 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		}
 	}
 
-	if field.is_bishop() {
+	else if field.is_bishop() {
 		self := board.field[x][y]
 		mut nx := x
 		mut ny := y
@@ -241,7 +229,7 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		}
 	}
 
-	if field.is_queen() {
+	else if field.is_queen() {
 		self := board.field[x][y]
 		mut nx := x
 		mut ny := y
