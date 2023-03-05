@@ -34,7 +34,7 @@ to build use:
 - ● Progress autosaves          ✅
 - ● Icon sets switching         ❌
 - ● Animations                  ❌
-- ● Rules                       ❌
+- ● Rules                       🕗
 - ● Stockfish integration & UCI 🕗
 - ● Bluetooth multiplayer       ❌
 
