@@ -17,6 +17,7 @@ pub struct Board {
 	current_fen   				string
 	highlighted_tiles			[]string
 	is_first_move				bool
+	is_white_winner				bool = true
 }
 
 pub fn (mut board Board) clear () {
@@ -99,7 +100,7 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		self := board.field[x][y]
 		if field.is_white() {
 			if is_valid([x - 1, y]) && board.field[x - 1][y] == .nothing {results << [[x - 1, y]]}
-			if board.is_unmoved_pawn(board.is_white_move, x) && board.field[x - 1][y] == .nothing && board.field[x - 2][y] == .nothing {results << [[x - 2, y]]}
+			if is_valid([x - 1, y]) && is_valid([x - 2, y]) && board.is_unmoved_pawn(board.is_white_move, x) && board.field[x - 1][y] == .nothing && board.field[x - 2][y] == .nothing {results << [[x - 2, y]]}
 			if is_valid([x - 1, y - 1]) && board.field[x - 1][y - 1].is_enemy(self)  {results << [[x - 1, y - 1]]}
 			if is_valid([x - 1, y + 1]) && board.field[x - 1][y + 1].is_enemy(self)  {results << [[x - 1, y + 1]]}
 			if board.last_en_passant != '-' {
@@ -108,7 +109,7 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 			}
 		} else {
 			if is_valid([x - 1, y]) && board.field[x + 1][y] == .nothing {results << [[x + 1, y]]}
-			if board.is_unmoved_pawn(board.is_white_move, x) && board.field[x + 1][y] == .nothing  && board.field[x + 2][y] == .nothing {results << [[x + 2, y]]}
+			if is_valid([x + 1, y]) && is_valid([x + 2, y]) && board.is_unmoved_pawn(board.is_white_move, x) && board.field[x + 1][y] == .nothing  && board.field[x + 2][y] == .nothing {results << [[x + 2, y]]}
 			if is_valid([x + 1, y - 1]) && board.field[x + 1][y - 1].is_enemy(self)  {results << [[x + 1, y - 1]]}
 			if is_valid([x + 1, y + 1]) && board.field[x + 1][y + 1].is_enemy(self)  {results << [[x + 1, y + 1]]}
 			if board.last_en_passant != '-' {
@@ -146,16 +147,16 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 				unsafe_fields := board.get_reachable_fields(true)
 				is_safe_short := !([7, 5] in unsafe_fields || [7, 6] in unsafe_fields)
 				is_safe_long := !([7, 3] in unsafe_fields || [7, 2] in unsafe_fields || [7, 1] in unsafe_fields)
-				if (board.field[7][3] == .nothing && board.field[7][2] == .nothing && board.field[7][1] == .nothing) && board.field[7][0] == .rook_white && board.white_long_castle_allowed && is_safe_long{results << [[x, y - 2]]}
-				if (board.field[7][5] == .nothing && board.field[7][6] == .nothing && board.field[7][7] == .rook_white) && board.white_short_castle_allowed && is_safe_short{results << [[x, y + 2]]}
+				if (board.field[7][3] == .nothing && board.field[7][2] == .nothing && board.field[7][1] == .nothing) && board.field[7][0] == .rook_white && board.white_long_castle_allowed && is_safe_long && is_valid([x, y - 2]) {results << [[x, y - 2]]}
+				if (board.field[7][5] == .nothing && board.field[7][6] == .nothing && board.field[7][7] == .rook_white) && board.white_short_castle_allowed && is_safe_short && is_valid([x, y + 2]) {results << [[x, y + 2]]}
 			}
 		} else {
 			if x == 0 && y == 4 {
 				unsafe_fields := board.get_reachable_fields(true)
 				is_safe_short := !([0, 5] in unsafe_fields || [0, 6] in unsafe_fields)
 				is_safe_long := !([0, 3] in unsafe_fields || [0, 2] in unsafe_fields || [0, 1] in unsafe_fields)
-				if (board.field[0][3] == .nothing && board.field[0][2] == .nothing && board.field[0][1] == .nothing && board.field[0][0] == .rook_black) && board.black_long_castle_allowed && is_safe_long {results << [[x, y - 2]]}
-				if (board.field[0][5] == .nothing && board.field[0][6] == .nothing && board.field[0][7] == .rook_black) && board.black_short_castle_allowed && is_safe_short {results << [[x, y + 2]]}
+				if (board.field[0][3] == .nothing && board.field[0][2] == .nothing && board.field[0][1] == .nothing && board.field[0][0] == .rook_black) && board.black_long_castle_allowed && is_safe_long && is_valid([x, y - 2]) {results << [[x, y - 2]]}
+				if (board.field[0][5] == .nothing && board.field[0][6] == .nothing && board.field[0][7] == .rook_black) && board.black_short_castle_allowed && is_safe_short && is_valid([x, y + 2]) {results << [[x, y + 2]]}
 			}
 		}
 	}
@@ -294,6 +295,6 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 	}
 
 	mut final := []string{}
-	for i in results {final << cords.xy2chessboard(i[0], i[1])}
+	for i in results {if is_valid(i) {final << cords.xy2chessboard(i[0], i[1])}}
 	return final
 }

@@ -369,6 +369,10 @@ fn (mut app App) handle_tap_play() {
 			app.undo << fen_utils.board_2_fen(app.board)
 			piece := app.board.field[oldcord[0]][oldcord[1]]
 			piecedx := if app.board.is_white_move {tilex + 1} else {tilex - 1}
+			if piece.is_king() {
+				app.state = .end
+				app.board.is_white_winner = piece.is_white()
+			}
 			if is_valid([piecedx, tiley]) {
 				pieced := app.board.field[piecedx][tiley]
 				if app.board.last_en_passant != '-' {if piece.is_pawn() && pieced.is_pawn() && pieced.is_enemy(piece) && cords.en_passant2xy(app.board.last_en_passant, app.board.is_white_move).reverse() == [piecedx, tiley]{app.board.kill(piecedx, tiley)}}
@@ -589,7 +593,7 @@ fn (app &App) draw_field() {
 
 	}
 	app.draw_additional_buttons(width_unused, height_unused)
-	app.draw_final_screen(false)
+	app.draw_final_screen(app.board.is_white_winner)
 }
 
 fn (app &App) draw_additional_buttons(width_unused int, height_unused int) {
