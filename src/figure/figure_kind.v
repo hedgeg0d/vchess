@@ -1,4 +1,4 @@
-module figure_kind
+module figure
 
 pub enum FigureKind {
 	nothing
@@ -15,62 +15,91 @@ pub enum FigureKind {
 	king_white
 	king_black
 }
-pub fn (figure FigureKind) is_white() bool {
-	white_pieces := [FigureKind.pawn_white, FigureKind.knight_white, FigureKind.bishop_white, FigureKind.rook_white, FigureKind.queen_white, FigureKind.king_white]
 
-	if figure == .nothing {return false}
+pub fn (figure FigureKind) is_white() bool {
+	white_pieces := [FigureKind.pawn_white, FigureKind.knight_white, FigureKind.bishop_white,
+		FigureKind.rook_white, FigureKind.queen_white, FigureKind.king_white]
+
+	if figure == .nothing {
+		return false
+	}
 	return figure in white_pieces
 }
 
 pub fn (figure FigureKind) is_black() bool {
-	black_pieces := [FigureKind.pawn_black, FigureKind.knight_black, FigureKind.bishop_black, FigureKind.rook_black, FigureKind.queen_black, FigureKind.king_black]
+	black_pieces := [FigureKind.pawn_black, FigureKind.knight_black, FigureKind.bishop_black,
+		FigureKind.rook_black, FigureKind.queen_black, FigureKind.king_black]
 
-	if figure == .nothing {return false}
+	if figure == .nothing {
+		return false
+	}
 	return figure in black_pieces
 }
 
-[inline]
+@[inline]
 pub fn (figure FigureKind) is_pawn() bool {
 	return figure == .pawn_black || figure == .pawn_white
 }
 
-[inline]
+@[inline]
 pub fn (figure FigureKind) is_knight() bool {
 	return figure == .knight_black || figure == .knight_white
 }
 
-[inline]
+@[inline]
 pub fn (figure FigureKind) is_bishop() bool {
 	return figure == .bishop_black || figure == .bishop_white
 }
 
-[inline]
+@[inline]
 pub fn (figure FigureKind) is_rook() bool {
 	return figure == .rook_black || figure == .rook_white
 }
 
-[inline]
+@[inline]
 pub fn (figure FigureKind) is_queen() bool {
 	return figure == .queen_black || figure == .queen_white
 }
 
-[inline]
+@[inline]
 pub fn (figure FigureKind) is_king() bool {
 	return figure == .king_black || figure == .king_white
 }
 
-[inline]
+@[inline]
 pub fn (figure FigureKind) is_enemy(piece FigureKind) bool {
-	if piece == .nothing || figure == .nothing {return false}
+	if piece == .nothing || figure == .nothing {
+		return false
+	}
 	return figure.is_white() == piece.is_black()
 }
 
-[inline]
+@[inline]
 pub fn (mut figure FigureKind) promote(choice int) {
 	match choice {
-		1 {figure = if figure.is_white() {FigureKind.bishop_white} else {FigureKind.bishop_black}}
-		2 {figure = if figure.is_white() {FigureKind.knight_white} else {FigureKind.knight_black}}
-		3 {figure = if figure.is_white() {FigureKind.rook_white} else {FigureKind.rook_black}}
-		else {figure = if figure.is_white() {FigureKind.queen_white} else {FigureKind.queen_black}}
+		1 {
+			figure = if figure.is_white() {
+				FigureKind.bishop_white
+			} else {
+				FigureKind.bishop_black
+			}
+		}
+		2 {
+			figure = if figure.is_white() {
+				FigureKind.knight_white
+			} else {
+				FigureKind.knight_black
+			}
+		}
+		3 {
+			figure = if figure.is_white() { FigureKind.rook_white } else { FigureKind.rook_black }
+		}
+		else {
+			figure = if figure.is_white() {
+				FigureKind.queen_white
+			} else {
+				FigureKind.queen_black
+			}
+		}
 	}
 }
