@@ -2,7 +2,6 @@ module main
 import gg
 import board
 import saving
-import gx
 import time
 import os
 
@@ -46,14 +45,14 @@ mut:
 }
 
 struct Theme {
-	background_color        gx.Color
-	button_main_color       gx.Color
-	button_second_color     gx.Color
-	light_tile_color        gx.Color
-	dark_tile_color         gx.Color
-	highlighted_light_color gx.Color
-	highlighted_dark_color  gx.Color
-	menu_font_color         gx.Color
+	background_color        gg.Color
+	button_main_color       gg.Color
+	button_second_color     gg.Color
+	light_tile_color        gg.Color
+	dark_tile_color         gg.Color
+	highlighted_light_color gg.Color
+	highlighted_dark_color  gg.Color
+	menu_font_color         gg.Color
 	path2background_android string
 	path2background         string
 }
@@ -64,38 +63,38 @@ const window_height = 800
 const main_save_name = 'SAVEFILE'
 const themes = [
 	&Theme{
-		background_color: gx.rgb(7, 3, 61)
-		button_main_color: gx.rgb(10, 5, 80)
-		button_second_color: gx.white
-		light_tile_color: gx.rgb(135, 157, 180)
-		dark_tile_color: gx.rgb(97, 120, 141)
-		highlighted_light_color: gx.rgb(72, 117, 110)
-		highlighted_dark_color: gx.rgb(57, 100, 94)
-		menu_font_color: gx.white
+		background_color: gg.rgb(7, 3, 61)
+		button_main_color: gg.rgb(10, 5, 80)
+		button_second_color: gg.white
+		light_tile_color: gg.rgb(135, 157, 180)
+		dark_tile_color: gg.rgb(97, 120, 141)
+		highlighted_light_color: gg.rgb(72, 117, 110)
+		highlighted_dark_color: gg.rgb(57, 100, 94)
+		menu_font_color: gg.white
 		path2background_android: 'menu/background.jpg'
 		path2background: 'assets/menu/background.jpg'
 	},
 	&Theme{
-		background_color: gx.rgb(22, 21, 18)
-		button_main_color: gx.black
-		button_second_color: gx.white
-		light_tile_color: gx.rgb(166, 168, 178)
-		dark_tile_color: gx.rgb(69, 70, 81)
-		highlighted_light_color: gx.rgb(114, 128, 140)
-		highlighted_dark_color: gx.rgb(107, 110, 124)
-		menu_font_color: gx.white
+		background_color: gg.rgb(22, 21, 18)
+		button_main_color: gg.black
+		button_second_color: gg.white
+		light_tile_color: gg.rgb(166, 168, 178)
+		dark_tile_color: gg.rgb(69, 70, 81)
+		highlighted_light_color: gg.rgb(114, 128, 140)
+		highlighted_dark_color: gg.rgb(107, 110, 124)
+		menu_font_color: gg.white
 		path2background_android: 'menu/background1.jpg'
 		path2background: 'assets/menu/background1.jpg'
 	},
 	&Theme{
-		background_color: gx.rgb(75, 7, 50)
-		button_main_color: gx.rgb(109, 45, 80)
-		button_second_color: gx.pink
-		light_tile_color: gx.rgb(205, 176, 207)
-		dark_tile_color: gx.rgb(109, 45, 80)
-		highlighted_light_color: gx.rgb(208, 54, 158)
-		highlighted_dark_color: gx.rgb(207, 91, 193)
-		menu_font_color: gx.white
+		background_color: gg.rgb(75, 7, 50)
+		button_main_color: gg.rgb(109, 45, 80)
+		button_second_color: gg.pink
+		light_tile_color: gg.rgb(205, 176, 207)
+		dark_tile_color: gg.rgb(109, 45, 80)
+		highlighted_light_color: gg.rgb(208, 54, 158)
+		highlighted_dark_color: gg.rgb(207, 91, 193)
+		menu_font_color: gg.white
 		path2background_android: 'menu/background2.jpg'
 		path2background: 'assets/menu/background2.jpg'
 	},
