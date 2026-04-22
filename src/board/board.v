@@ -1,4 +1,4 @@
-module board
+module xboard
 
 import figure
 import cords
@@ -20,22 +20,22 @@ pub mut:
 	is_white_winner            bool = true
 }
 
-pub fn (mut board Board) clear() {
+pub fn (mut xboard Board) clear() {
 	for y in 0 .. 8 {
 		for x in 0 .. 8 {
-			board.field[y][x] = .nothing
+			xboard.field[y][x] = .nothing
 		}
 	}
 }
 
-pub fn (mut board Board) swap(x1 int, y1 int, x2 int, y2 int) {
-	tile1 := board.field[x1][y1]
-	mut tile2 := board.field[x2][y2]
-	if board.field[x1][y1].is_enemy(board.field[x2][y2]) {
+pub fn (mut xboard Board) swap(x1 int, y1 int, x2 int, y2 int) {
+	tile1 := xboard.field[x1][y1]
+	mut tile2 := xboard.field[x2][y2]
+	if xboard.field[x1][y1].is_enemy(xboard.field[x2][y2]) {
 		tile2 = .nothing
 	}
-	board.field[x1][y1] = tile2
-	board.field[x2][y2] = tile1
+	xboard.field[x1][y1] = tile2
+	xboard.field[x2][y2] = tile1
 }
 
 @[inline]
@@ -44,44 +44,44 @@ pub fn is_valid(pos []int) bool {
 }
 
 @[inline]
-pub fn (mut board Board) is_unmoved_pawn(is_white bool, y int) bool {
+pub fn (mut xboard Board) is_unmoved_pawn(is_white bool, y int) bool {
 	return (is_white && y == 6) || (!is_white && y == 1)
 }
 
 @[inline]
-pub fn (mut board Board) kill(x int, y int) {
-	board.field[x][y] = .nothing
+pub fn (mut xboard Board) kill(x int, y int) {
+	xboard.field[x][y] = .nothing
 }
 
-pub fn (mut board Board) get_hline(y int) []figure.FigureKind {
+pub fn (mut xboard Board) get_hline(y int) []figure.FigureKind {
 	if y < 0 || y > 7 {
 		return []
 	}
 	mut results := []figure.FigureKind{}
 	for x in 0 .. 8 {
-		results << board.field[y][x]
+		results << xboard.field[y][x]
 	}
 	return results
 }
 
-pub fn (mut board Board) get_vline(x int) []figure.FigureKind {
+pub fn (mut xboard Board) get_vline(x int) []figure.FigureKind {
 	if x < 0 || x > 7 {
 		return []
 	}
 	mut results := []figure.FigureKind{}
 	for y in 0 .. 8 {
-		results << board.field[y][x]
+		results << xboard.field[y][x]
 	}
 	return results
 }
 
-pub fn (mut board Board) get_reachable_fields(ignore_kings bool) [][]int {
+pub fn (mut xboard Board) get_reachable_fields(ignore_kings bool) [][]int {
 	mut results := [][]int{}
 	for x in 0 .. 8 {
 		for y in 0 .. 8 {
-			piece := board.field[y][x]
-			if piece != .nothing && !piece.is_king() && piece.is_white() != board.is_white_move {
-				for i in board.allowed_moves(y, x) {
+			piece := xboard.field[y][x]
+			if piece != .nothing && !piece.is_king() && piece.is_white() != xboard.is_white_move {
+				for i in xboard.allowed_moves(y, x) {
 					if i.len == 2 && is_valid(cords.chessboard2xy(i)) {
 						results << cords.chessboard2xy(i)
 					}
@@ -92,10 +92,10 @@ pub fn (mut board Board) get_reachable_fields(ignore_kings bool) [][]int {
 	return results
 }
 
-pub fn (mut board Board) get_kings_cords(is_white bool) []int {
+pub fn (mut xboard Board) get_kings_cords(is_white bool) []int {
 	for x in 0 .. 8 {
 		for y in 0 .. 8 {
-			if board.field[y][x].is_king() && board.field[y][x].is_white() == is_white {
+			if xboard.field[y][x].is_king() && xboard.field[y][x].is_white() == is_white {
 				return [y, x]
 			}
 		}
@@ -104,66 +104,66 @@ pub fn (mut board Board) get_kings_cords(is_white bool) []int {
 }
 
 @[inline]
-pub fn (mut board Board) get_line(coordinate int, is_horizontal bool, reversed bool) []figure.FigureKind {
+pub fn (mut xboard Board) get_line(coordinate int, is_horizontal bool, reversed bool) []figure.FigureKind {
 	if is_horizontal {
-		return board.get_hline(coordinate)
+		return xboard.get_hline(coordinate)
 	} else {
-		return board.get_vline(coordinate)
+		return xboard.get_vline(coordinate)
 	}
 }
 
-pub fn (mut board Board) allowed_moves(x int, y int) []string {
+pub fn (mut xboard Board) allowed_moves(x int, y int) []string {
 	mut results := [][]int{}
-	field := board.field[x][y]
+	field := xboard.field[x][y]
 	if field.is_pawn() {
-		self := board.field[x][y]
+		self := xboard.field[x][y]
 		if field.is_white() {
-			if is_valid([x - 1, y]) && board.field[x - 1][y] == .nothing {
+			if is_valid([x - 1, y]) && xboard.field[x - 1][y] == .nothing {
 				results << [[x - 1, y]]
 			}
 			if is_valid([x - 1, y]) && is_valid([x - 2, y])
-				&& board.is_unmoved_pawn(board.is_white_move, x)
-				&& board.field[x - 1][y] == .nothing && board.field[x - 2][y] == .nothing {
+				&& xboard.is_unmoved_pawn(xboard.is_white_move, x)
+				&& xboard.field[x - 1][y] == .nothing && xboard.field[x - 2][y] == .nothing {
 				results << [[x - 2, y]]
 			}
-			if is_valid([x - 1, y - 1]) && board.field[x - 1][y - 1].is_enemy(self) {
+			if is_valid([x - 1, y - 1]) && xboard.field[x - 1][y - 1].is_enemy(self) {
 				results << [[x - 1, y - 1]]
 			}
-			if is_valid([x - 1, y + 1]) && board.field[x - 1][y + 1].is_enemy(self) {
+			if is_valid([x - 1, y + 1]) && xboard.field[x - 1][y + 1].is_enemy(self) {
 				results << [[x - 1, y + 1]]
 			}
-			if board.last_en_passant != '-' {
+			if xboard.last_en_passant != '-' {
 				if is_valid([x, y - 1])
-					&& cords.en_passant2xy(board.last_en_passant, board.is_white_move).reverse() == [x, y - 1] {
+					&& cords.en_passant2xy(xboard.last_en_passant, xboard.is_white_move).reverse() == [x, y - 1] {
 					results << [[x - 1, y - 1]]
 				}
 				if is_valid([x, y + 1])
-					&& cords.en_passant2xy(board.last_en_passant, board.is_white_move).reverse() == [x, y + 1] {
+					&& cords.en_passant2xy(xboard.last_en_passant, xboard.is_white_move).reverse() == [x, y + 1] {
 					results << [[x - 1, y + 1]]
 				}
 			}
 		} else {
-			if is_valid([x - 1, y]) && board.field[x + 1][y] == .nothing {
+			if is_valid([x - 1, y]) && xboard.field[x + 1][y] == .nothing {
 				results << [[x + 1, y]]
 			}
 			if is_valid([x + 1, y]) && is_valid([x + 2, y])
-				&& board.is_unmoved_pawn(board.is_white_move, x)
-				&& board.field[x + 1][y] == .nothing && board.field[x + 2][y] == .nothing {
+				&& xboard.is_unmoved_pawn(xboard.is_white_move, x)
+				&& xboard.field[x + 1][y] == .nothing && xboard.field[x + 2][y] == .nothing {
 				results << [[x + 2, y]]
 			}
-			if is_valid([x + 1, y - 1]) && board.field[x + 1][y - 1].is_enemy(self) {
+			if is_valid([x + 1, y - 1]) && xboard.field[x + 1][y - 1].is_enemy(self) {
 				results << [[x + 1, y - 1]]
 			}
-			if is_valid([x + 1, y + 1]) && board.field[x + 1][y + 1].is_enemy(self) {
+			if is_valid([x + 1, y + 1]) && xboard.field[x + 1][y + 1].is_enemy(self) {
 				results << [[x + 1, y + 1]]
 			}
-			if board.last_en_passant != '-' {
+			if xboard.last_en_passant != '-' {
 				if is_valid([x, y - 1])
-					&& cords.en_passant2xy(board.last_en_passant, board.is_white_move).reverse() == [x, y - 1] {
+					&& cords.en_passant2xy(xboard.last_en_passant, xboard.is_white_move).reverse() == [x, y - 1] {
 					results << [[x + 1, y - 1]]
 				}
 				if is_valid([x, y + 1])
-					&& cords.en_passant2xy(board.last_en_passant, board.is_white_move).reverse() == [x, y + 1] {
+					&& cords.en_passant2xy(xboard.last_en_passant, xboard.is_white_move).reverse() == [x, y + 1] {
 					results << [[x + 1, y + 1]]
 				}
 			}
@@ -191,34 +191,34 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		results << [[x - 1, y - 1]]
 		if field.is_white() {
 			if x == 7 && y == 4 {
-				unsafe_fields := board.get_reachable_fields(true)
+				unsafe_fields := xboard.get_reachable_fields(true)
 				is_safe_short := !([7, 5] in unsafe_fields || [7, 6] in unsafe_fields)
 				is_safe_long := !([7, 3] in unsafe_fields || [7, 2] in unsafe_fields
 					|| [7, 1] in unsafe_fields)
-				if (board.field[7][3] == .nothing && board.field[7][2] == .nothing
-					&& board.field[7][1] == .nothing) && board.field[7][0] == .rook_white
-					&& board.white_long_castle_allowed && is_safe_long && is_valid([x, y - 2]) {
+				if (xboard.field[7][3] == .nothing && xboard.field[7][2] == .nothing
+					&& xboard.field[7][1] == .nothing) && xboard.field[7][0] == .rook_white
+					&& xboard.white_long_castle_allowed && is_safe_long && is_valid([x, y - 2]) {
 					results << [[x, y - 2]]
 				}
-				if (board.field[7][5] == .nothing && board.field[7][6] == .nothing
-					&& board.field[7][7] == .rook_white) && board.white_short_castle_allowed
+				if (xboard.field[7][5] == .nothing && xboard.field[7][6] == .nothing
+					&& xboard.field[7][7] == .rook_white) && xboard.white_short_castle_allowed
 					&& is_safe_short && is_valid([x, y + 2]) {
 					results << [[x, y + 2]]
 				}
 			}
 		} else {
 			if x == 0 && y == 4 {
-				unsafe_fields := board.get_reachable_fields(true)
+				unsafe_fields := xboard.get_reachable_fields(true)
 				is_safe_short := !([0, 5] in unsafe_fields || [0, 6] in unsafe_fields)
 				is_safe_long := !([0, 3] in unsafe_fields || [0, 2] in unsafe_fields
 					|| [0, 1] in unsafe_fields)
-				if (board.field[0][3] == .nothing && board.field[0][2] == .nothing
-					&& board.field[0][1] == .nothing && board.field[0][0] == .rook_black)
-					&& board.black_long_castle_allowed && is_safe_long && is_valid([x, y - 2]) {
+				if (xboard.field[0][3] == .nothing && xboard.field[0][2] == .nothing
+					&& xboard.field[0][1] == .nothing && xboard.field[0][0] == .rook_black)
+					&& xboard.black_long_castle_allowed && is_safe_long && is_valid([x, y - 2]) {
 					results << [[x, y - 2]]
 				}
-				if (board.field[0][5] == .nothing && board.field[0][6] == .nothing
-					&& board.field[0][7] == .rook_black) && board.black_short_castle_allowed
+				if (xboard.field[0][5] == .nothing && xboard.field[0][6] == .nothing
+					&& xboard.field[0][7] == .rook_black) && xboard.black_short_castle_allowed
 					&& is_safe_short && is_valid([x, y + 2]) {
 					results << [[x, y + 2]]
 				}
@@ -226,13 +226,13 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		}
 	} else if field.is_rook() {
 		mut nx := x
-		self := board.field[x][y]
+		self := xboard.field[x][y]
 		for nx < 7 {
 			nx++
-			if board.field[nx][y] == .nothing {
+			if xboard.field[nx][y] == .nothing {
 				results << [[nx, y]]
 			} else {
-				if board.field[nx][y].is_enemy(self) {
+				if xboard.field[nx][y].is_enemy(self) {
 					results << [[nx, y]]
 				}
 				break
@@ -241,10 +241,10 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		nx = x
 		for nx > 0 {
 			nx--
-			if board.field[nx][y] == .nothing {
+			if xboard.field[nx][y] == .nothing {
 				results << [[nx, y]]
 			} else {
-				if board.field[nx][y].is_enemy(self) {
+				if xboard.field[nx][y].is_enemy(self) {
 					results << [[nx, y]]
 				}
 				break
@@ -253,10 +253,10 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		mut ny := y
 		for ny < 7 {
 			ny++
-			if board.field[x][ny] == .nothing {
+			if xboard.field[x][ny] == .nothing {
 				results << [[x, ny]]
 			} else {
-				if board.field[x][ny].is_enemy(self) {
+				if xboard.field[x][ny].is_enemy(self) {
 					results << [[x, ny]]
 				}
 				break
@@ -265,26 +265,26 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		ny = y
 		for ny > 0 {
 			ny--
-			if board.field[x][ny] == .nothing {
+			if xboard.field[x][ny] == .nothing {
 				results << [[x, ny]]
 			} else {
-				if board.field[x][ny].is_enemy(self) {
+				if xboard.field[x][ny].is_enemy(self) {
 					results << [[x, ny]]
 				}
 				break
 			}
 		}
 	} else if field.is_bishop() {
-		self := board.field[x][y]
+		self := xboard.field[x][y]
 		mut nx := x
 		mut ny := y
 		for nx < 7 && ny < 7 {
 			nx++
 			ny++
-			if board.field[nx][ny] == .nothing {
+			if xboard.field[nx][ny] == .nothing {
 				results << [[nx, ny]]
 			} else {
-				if board.field[nx][ny].is_enemy(self) {
+				if xboard.field[nx][ny].is_enemy(self) {
 					results << [[nx, ny]]
 				}
 				break
@@ -294,10 +294,10 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		for nx < 7 && ny > 0 {
 			nx++
 			ny--
-			if board.field[nx][ny] == .nothing {
+			if xboard.field[nx][ny] == .nothing {
 				results << [[nx, ny]]
 			} else {
-				if board.field[nx][ny].is_enemy(self) {
+				if xboard.field[nx][ny].is_enemy(self) {
 					results << [[nx, ny]]
 				}
 				break
@@ -307,10 +307,10 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		for nx > 0 && ny > 0 {
 			nx--
 			ny--
-			if board.field[nx][ny] == .nothing {
+			if xboard.field[nx][ny] == .nothing {
 				results << [[nx, ny]]
 			} else {
-				if board.field[nx][ny].is_enemy(self) {
+				if xboard.field[nx][ny].is_enemy(self) {
 					results << [[nx, ny]]
 				}
 				break
@@ -320,26 +320,26 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		for nx > 0 && ny < 7 {
 			nx--
 			ny++
-			if board.field[nx][ny] == .nothing {
+			if xboard.field[nx][ny] == .nothing {
 				results << [[nx, ny]]
 			} else {
-				if board.field[nx][ny].is_enemy(self) {
+				if xboard.field[nx][ny].is_enemy(self) {
 					results << [[nx, ny]]
 				}
 				break
 			}
 		}
 	} else if field.is_queen() {
-		self := board.field[x][y]
+		self := xboard.field[x][y]
 		mut nx := x
 		mut ny := y
 		for nx < 7 && ny < 7 {
 			nx++
 			ny++
-			if board.field[nx][ny] == .nothing {
+			if xboard.field[nx][ny] == .nothing {
 				results << [[nx, ny]]
 			} else {
-				if board.field[nx][ny].is_enemy(self) {
+				if xboard.field[nx][ny].is_enemy(self) {
 					results << [[nx, ny]]
 				}
 				break
@@ -349,10 +349,10 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		for nx < 7 && ny > 0 {
 			nx++
 			ny--
-			if board.field[nx][ny] == .nothing {
+			if xboard.field[nx][ny] == .nothing {
 				results << [[nx, ny]]
 			} else {
-				if board.field[nx][ny].is_enemy(self) {
+				if xboard.field[nx][ny].is_enemy(self) {
 					results << [[nx, ny]]
 				}
 				break
@@ -362,10 +362,10 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		for nx > 0 && ny > 0 {
 			nx--
 			ny--
-			if board.field[nx][ny] == .nothing {
+			if xboard.field[nx][ny] == .nothing {
 				results << [[nx, ny]]
 			} else {
-				if board.field[nx][ny].is_enemy(self) {
+				if xboard.field[nx][ny].is_enemy(self) {
 					results << [[nx, ny]]
 				}
 				break
@@ -375,10 +375,10 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		for nx > 0 && ny < 7 {
 			nx--
 			ny++
-			if board.field[nx][ny] == .nothing {
+			if xboard.field[nx][ny] == .nothing {
 				results << [[nx, ny]]
 			} else {
-				if board.field[nx][ny].is_enemy(self) {
+				if xboard.field[nx][ny].is_enemy(self) {
 					results << [[nx, ny]]
 				}
 				break
@@ -387,10 +387,10 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		nx, ny = x, y
 		for nx < 7 {
 			nx++
-			if board.field[nx][y] == .nothing {
+			if xboard.field[nx][y] == .nothing {
 				results << [[nx, y]]
 			} else {
-				if board.field[nx][y].is_enemy(self) {
+				if xboard.field[nx][y].is_enemy(self) {
 					results << [[nx, y]]
 				}
 				break
@@ -399,10 +399,10 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		nx = x
 		for nx > 0 {
 			nx--
-			if board.field[nx][y] == .nothing {
+			if xboard.field[nx][y] == .nothing {
 				results << [[nx, y]]
 			} else {
-				if board.field[nx][y].is_enemy(self) {
+				if xboard.field[nx][y].is_enemy(self) {
 					results << [[nx, y]]
 				}
 				break
@@ -410,10 +410,10 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		}
 		for ny < 7 {
 			ny++
-			if board.field[x][ny] == .nothing {
+			if xboard.field[x][ny] == .nothing {
 				results << [[x, ny]]
 			} else {
-				if board.field[x][ny].is_enemy(self) {
+				if xboard.field[x][ny].is_enemy(self) {
 					results << [[x, ny]]
 				}
 				break
@@ -422,10 +422,10 @@ pub fn (mut board Board) allowed_moves(x int, y int) []string {
 		ny = y
 		for ny > 0 {
 			ny--
-			if board.field[x][ny] == .nothing {
+			if xboard.field[x][ny] == .nothing {
 				results << [[x, ny]]
 			} else {
-				if board.field[x][ny].is_enemy(self) {
+				if xboard.field[x][ny].is_enemy(self) {
 					results << [[x, ny]]
 				}
 				break

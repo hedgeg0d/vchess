@@ -1,6 +1,6 @@
 module main
 import cords
-import gx
+import gg
 import math
 
 fn (app &App) draw_field() {
@@ -56,7 +56,7 @@ fn (app &App) draw_field() {
 				else {}
 			}
 			if x == 0 {
-				app.gg.draw_text(xcord, ycord, '${8 - y}', gx.TextCfg{
+				app.gg.draw_text(xcord, ycord, '${8 - y}', gg.TextCfg{
 					color: if is_dark {
 						app.theme.light_tile_color
 					} else {
@@ -69,7 +69,7 @@ fn (app &App) draw_field() {
 			}
 			if (y == 7 && app.is_white) || (y == 0 && !app.is_white) {
 				app.gg.draw_text(xcord + w, ycord + h, '${cords.xy2chessboard(y, x)[0].ascii_str()}',
-					gx.TextCfg{
+					gg.TextCfg{
 					color: if is_dark {
 						app.theme.light_tile_color
 					} else {
@@ -132,31 +132,31 @@ fn (app &App) draw_final_screen(is_white_victory bool) {
 	}
 	y := app.ui.window_height / 3
 	paddingy := app.ui.window_height / 15
-	app.gg.draw_rect_filled(0, 0, app.ui.window_width, app.ui.window_height, gx.rgba(0,
+	app.gg.draw_rect_filled(0, 0, app.ui.window_width, app.ui.window_height, gg.rgba(0,
 		0, 0, 200))
-	app.gg.draw_text(app.ui.window_width / 2, y, 'Game finished', gx.TextCfg{
-		color: gx.white
+	app.gg.draw_text(app.ui.window_width / 2, y, 'Game finished', gg.TextCfg{
+		color: gg.white
 		size: app.ui.font_size / 2
 		align: .center
 		vertical_align: .bottom
 	})
 	victor := if is_white_victory { 'White' } else { 'Black' }
-	app.gg.draw_text(app.ui.window_width / 2, y + paddingy, '${victor} won', gx.TextCfg{
-		color: gx.white
+	app.gg.draw_text(app.ui.window_width / 2, y + paddingy, '${victor} won', gg.TextCfg{
+		color: gg.white
 		size: app.ui.font_size / 3
 		align: .center
 		vertical_align: .bottom
 	})
 	app.gg.draw_text(app.ui.window_width / 2, (y + paddingy) * 2, 'Moves done: ${app.board.fullmove_number}',
-		gx.TextCfg{
-		color: gx.white
+		gg.TextCfg{
+		color: gg.white
 		size: app.ui.font_size / 3
 		align: .center
 		vertical_align: .bottom
 	})
 	app.gg.draw_text(app.ui.window_width / 2, y + paddingy * 10, 'Press any button to continue',
-		gx.TextCfg{
-		color: gx.white
+		gg.TextCfg{
+		color: gg.white
 		size: app.ui.font_size / 3
 		align: .center
 		vertical_align: .bottom
@@ -166,22 +166,22 @@ fn (app &App) draw_final_screen(is_white_victory bool) {
 fn (app &App) draw_menu() {
 	w, h := app.ui.window_width, app.ui.window_height
 	app.gg.draw_image(0, 0, w, h, app.m_background)
-	app.gg.draw_text(w / 2, h / 2 - h / 4, 'VChess', gx.TextCfg{
-		color: gx.white
+	app.gg.draw_text(w / 2, h / 2 - h / 4, 'VChess', gg.TextCfg{
+		color: gg.white
 		size: app.ui.font_size
 		align: .center
 		vertical_align: .bottom
 	})
 	app.gg.draw_rounded_rect_filled(w / 2 - ((w / 4) / 2), h / 2, w / 4, h / 10, 10, app.theme.button_main_color)
 	app.gg.draw_rounded_rect_empty(w / 2 - ((w / 4) / 2), h / 2, w / 4, h / 10, 10, app.theme.button_second_color)
-	app.gg.draw_text(w / 2, h / 2 + h / 20 + app.ui.font_size / 4, 'Start game', gx.TextCfg{
-		color: gx.white
+	app.gg.draw_text(w / 2, h / 2 + h / 20 + app.ui.font_size / 4, 'Start game', gg.TextCfg{
+		color: gg.white
 		size: app.ui.font_size / 2
 		align: .center
 		vertical_align: .bottom
 	})
-	app.gg.draw_text(w / 2, h / 2 + h / 5, 'Play as', gx.TextCfg{
-		color: gx.white
+	app.gg.draw_text(w / 2, h / 2 + h / 5, 'Play as', gg.TextCfg{
+		color: gg.white
 		size: app.ui.font_size / 2
 		align: .center
 		vertical_align: .bottom
@@ -189,8 +189,8 @@ fn (app &App) draw_menu() {
 	app.gg.draw_rounded_rect_filled(w / 2 - w / 8, h / 2 + h / 4, w / 4, h / 12, 10, app.theme.button_main_color)
 	app.gg.draw_rounded_rect_empty(w / 2 - w / 8, h / 2 + h / 4, w / 4, h / 12, 10, app.theme.button_second_color)
 	mut choice := if app.is_white { 'white' } else { 'black' }
-	app.gg.draw_text(w / 2, h / 2 + h / 4 + app.ui.font_size / 4 + h / 24, choice, gx.TextCfg{
-		color: gx.white
+	app.gg.draw_text(w / 2, h / 2 + h / 4 + app.ui.font_size / 4 + h / 24, choice, gg.TextCfg{
+		color: gg.white
 		size: app.ui.font_size / 2
 		align: .center
 		vertical_align: .bottom
@@ -198,7 +198,7 @@ fn (app &App) draw_menu() {
 
 	app.gg.draw_rounded_rect_filled(3, 3, w / 15, h / 15, 10, app.theme.button_main_color)
 	app.gg.draw_rounded_rect_empty(3, 3, w / 15, h / 15, 10, app.theme.button_second_color)
-	app.gg.draw_text(avg(3, w / 15), 3 + app.ui.font_size / 4 + h / 36, 'Theme', gx.TextCfg{
+	app.gg.draw_text(avg(3, w / 15), 3 + app.ui.font_size / 4 + h / 36, 'Theme', gg.TextCfg{
 		color: app.theme.menu_font_color
 		size: app.ui.font_size / 4
 		align: .center
