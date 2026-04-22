@@ -1,9 +1,9 @@
 # vchess
 Chess game written in V programming language(in development)
-Thank you for your stars, you encouraged me to revive the game
+Thank you for your stars
 
 ## Disclaimer ⚠️
-**The game is unfinished and unplayable now, but the work is in process**
+**The game is unfinished and unplayable now**
 
 ### Build🔨
 
@@ -15,7 +15,7 @@ to build use:
  git clone https://github.com/hedgeg0d/vchess/
  
 # 2. Build project
- cd vchess && v .
+ cd vchess/src && v .
 
 # 3. Executable file named "vchess" will appear. Executable have to be in the same folder with assets/
  ./vchess
