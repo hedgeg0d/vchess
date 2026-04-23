@@ -120,7 +120,20 @@ pub fn is_valid(pos []int) bool {
 fn (mut app App) resize() {
 	mut s := app.gg.scale
 	if s == 0.0 {
+		// DPI could not be queried from the display server (LINUX_X11_QUERY_SYSTEM_DPI_FAILED).
+		// Fall back to 1.0 which corresponds to the default 96 DPI.
 		s = 1.0
+	}
+	// Allow the user to override DPI scale via the VCHESS_DPI_SCALE environment variable.
+	// This is useful when the display server cannot report DPI (e.g., minimal X11 / Wayland
+	// sessions) and the default scale produces wrong UI sizing.
+	// Example: VCHESS_DPI_SCALE=1.5 ./vchess
+	dpi_env := os.getenv('VCHESS_DPI_SCALE')
+	if dpi_env != '' {
+		parsed := dpi_env.f32()
+		if parsed > 0.0 {
+			s = parsed
+		}
 	}
 	real_window_size := app.gg.window_size()
 	w := real_window_size.width
@@ -489,6 +502,21 @@ fn (mut app App) handle_tap_menu() {
 fn main() {
 	$if android {
 		os.chdir('/storage/emulated/0/Android/data/com.hedgegod.chessgame')!
+	}
+	// On Linux, sokol/EGL can fail to find any EGL configs when GPU drivers are
+	// unavailable or misconfigured (LINUX_EGL_NO_CONFIGS).  Passing --software or
+	// --disable-gpu asks Mesa to use its software (llvmpipe/softpipe) renderer
+	// instead, which works in containers, remote sessions, and CI environments.
+	// The same effect can be achieved by setting LIBGL_ALWAYS_SOFTWARE=1 in the
+	// environment before launching the game.
+	$if linux {
+		if '--software' in os.args || '--disable-gpu' in os.args {
+			os.setenv('LIBGL_ALWAYS_SOFTWARE', '1', true)
+			eprintln('vchess: note: software rendering enabled (Mesa llvmpipe/softpipe)')
+			eprintln('vchess: note: to disable, launch without --software / --disable-gpu')
+		} else if os.getenv('LIBGL_ALWAYS_SOFTWARE') == '1' {
+			eprintln('vchess: note: software rendering active (LIBGL_ALWAYS_SOFTWARE=1 is set)')
+		}
 	}
 	curves_quality := 30
 	mut app := &App{}

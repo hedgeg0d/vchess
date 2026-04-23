@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build-linux:
+    name: Build (Linux)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install V
+        run: |
+          git clone --depth 1 https://github.com/vlang/v.git /tmp/vlang
+          cd /tmp/vlang && make
+          echo "/tmp/vlang" >> $GITHUB_PATH
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libx11-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libxrandr-dev \
+            libxss-dev \
+            libegl-dev \
+            libgl-dev \
+            libglu1-mesa-dev \
+            mesa-vulkan-drivers \
+            libglfw3-dev
+
+      - name: Build vchess
+        run: v .
+
+      - name: Verify binary exists
+        run: test -f vchess
