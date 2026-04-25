@@ -77,12 +77,13 @@ ls -l /dev/dri
 - ● Preffered color menu option ✅
 - ● Theme switching             ✅
 - ● Progress autosaves          ✅
+- ● PGN support                 ❌
 - ● Icon sets switching         ❌
 - ● Animations                  ❌
 - ● Rules                       🕗
 - ● Stockfish integration & UCI 🕗
 - ● Bluetooth multiplayer       ❌
-
+- ● E-Board support             ❌
 ## Preview ✨
 ![image](https://user-images.githubusercontent.com/83360271/221190798-905c4632-a171-462f-9f60-eb088751c0c9.png)
 ![image](https://user-images.githubusercontent.com/83360271/221369701-d6d17790-4706-4c41-ae77-c721fcb1ca35.png)
