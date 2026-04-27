@@ -83,6 +83,7 @@ ls -l /dev/dri
 - ● Rules                       🕗
 - ● Stockfish integration & UCI 🕗
 - ● Bluetooth multiplayer       ❌
+- ● USB Support                 ❌
 - ● E-Board support             ❌
 ## Preview ✨
 ![image](https://user-images.githubusercontent.com/83360271/221190798-905c4632-a171-462f-9f60-eb088751c0c9.png)
