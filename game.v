@@ -518,7 +518,7 @@ fn main() {
 			eprintln('vchess: note: software rendering active (LIBGL_ALWAYS_SOFTWARE=1 is set)')
 		}
 	}
-	curves_quality := 30
+	curves_quality := 4
 	mut app := &App{}
 	app.new_game(true)
 	app.saver.load_save(mut app.board)
