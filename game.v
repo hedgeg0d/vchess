@@ -75,6 +75,18 @@ fn (mut app App) new_game(to_menu bool) {
 	app.undo = []string{cap: 8192}
 	app.moves = 0
 	app.promoting = false
+	app.anims.clear()
+}
+
+fn (mut app App) start_anim(kind figure.FigureKind, from_row int, from_col int, to_row int, to_col int) {
+	app.anims << Anim{
+		kind: kind
+		from_row: from_row
+		from_col: from_col
+		to_row: to_row
+		to_col: to_col
+		start: time.now().unix_milli()
+	}
 }
 
 @[inline]
@@ -354,7 +366,9 @@ fn (mut app App) apply_engine_move(mv string) {
 
 fn (mut app App) make_move(oldcord []int, tilex int, tiley int, promo int) {
 	app.undo << fen_utils.board_2_fen(app.board)
+	app.anims.clear()
 	piece := app.board.field[oldcord[0]][oldcord[1]]
+	app.start_anim(piece, oldcord[0], oldcord[1], tilex, tiley)
 	piecedx := if app.board.is_white_move { tilex + 1 } else { tilex - 1 }
 	if is_valid([piecedx, tiley]) {
 		pieced := app.board.field[piecedx][tiley]
@@ -381,15 +395,19 @@ fn (mut app App) make_move(oldcord []int, tilex int, tiley int, promo int) {
 			app.board.black_long_castle_allowed = false
 		}
 		if oldcord == [7, 4] && [tilex, tiley] == [7, 2] {
+			app.start_anim(app.board.field[7][0], 7, 0, 7, 3)
 			app.board.swap(7, 0, 7, 3)
 		}
 		if oldcord == [0, 4] && [tilex, tiley] == [0, 2] {
+			app.start_anim(app.board.field[0][0], 0, 0, 0, 3)
 			app.board.swap(0, 0, 0, 3)
 		}
 		if oldcord == [7, 4] && [tilex, tiley] == [7, 6] {
+			app.start_anim(app.board.field[7][7], 7, 7, 7, 5)
 			app.board.swap(7, 7, 7, 5)
 		}
 		if oldcord == [0, 4] && [tilex, tiley] == [0, 6] {
+			app.start_anim(app.board.field[0][7], 0, 7, 0, 5)
 			app.board.swap(0, 7, 0, 5)
 		}
 	}

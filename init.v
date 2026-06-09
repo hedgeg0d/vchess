@@ -1,6 +1,7 @@
 module main
 import gg
 import board
+import figure
 import saving
 import uci
 import sync
@@ -48,6 +49,17 @@ mut:
 	engine_result       string
 	engine_has_result   bool
 	engine_error        string
+	anims               []Anim
+}
+
+struct Anim {
+mut:
+	kind     figure.FigureKind
+	from_row int
+	from_col int
+	to_row   int
+	to_col   int
+	start    i64
 }
 
 struct Rect {
@@ -94,6 +106,7 @@ const window_title = 'VChess'
 const window_width = 800
 const window_height = 800
 const main_save_name = 'SAVEFILE'
+const anim_duration_ms = i64(180)
 const themes = [
 	&Theme{
 		background_color: gg.rgb(7, 3, 61)

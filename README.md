@@ -98,7 +98,7 @@ ls -l /dev/dri
 - ● Progress autosaves          ✅
 - ● PGN support                 ❌
 - ● Icon sets switching         ❌
-- ● Animations                  ❌
+- ● Animations                  ✅
 - ● Rules                       ✅
 - ● Stockfish integration & UCI ✅
 - ● Bluetooth multiplayer       ❌

@@ -1,7 +1,49 @@
 module main
 import cords
+import figure
 import gg
 import math
+import time
+
+fn (app &App) piece_image(kind figure.FigureKind) gg.Image {
+	return match kind {
+		.pawn_white { app.pawn_white }
+		.bishop_white { app.bishop_white }
+		.knight_white { app.knight_white }
+		.rook_white { app.rook_white }
+		.king_white { app.king_white }
+		.queen_white { app.queen_white }
+		.pawn_black { app.pawn_black }
+		.bishop_black { app.bishop_black }
+		.knight_black { app.knight_black }
+		.rook_black { app.rook_black }
+		.king_black { app.king_black }
+		.queen_black { app.queen_black }
+		else { app.pawn_white }
+	}
+}
+
+fn (app &App) cell_screen_pos(row int, col int) (int, int) {
+	w := math.min(app.ui.window_height / 8, app.ui.window_width / 8)
+	width_unused := app.ui.window_width - w * 8
+	height_unused := app.ui.window_height - w * 8
+	px := width_unused / 2 + col * w
+	py := if app.is_white {
+		height_unused / 2 + row * w
+	} else {
+		app.ui.window_height - height_unused / 2 - w - row * w
+	}
+	return px, py
+}
+
+fn (app &App) is_anim_dest(row int, col int) bool {
+	for a in app.anims {
+		if a.to_row == row && a.to_col == col {
+			return true
+		}
+	}
+	return false
+}
 
 fn (app &App) draw_field() {
 	w, h := math.min(app.ui.window_height / 8, app.ui.window_width / 8), math.min(app.ui.window_height / 8,
@@ -40,20 +82,8 @@ fn (app &App) draw_field() {
 					app.theme.light_tile_color
 				})
 			}
-			match app.board.field[y][x] {
-				.pawn_white { app.gg.draw_image(xcord, ycord, w, h, app.pawn_white) }
-				.bishop_white { app.gg.draw_image(xcord, ycord, w, h, app.bishop_white) }
-				.knight_white { app.gg.draw_image(xcord, ycord, w, h, app.knight_white) }
-				.rook_white { app.gg.draw_image(xcord, ycord, w, h, app.rook_white) }
-				.king_white { app.gg.draw_image(xcord, ycord, w, h, app.king_white) }
-				.queen_white { app.gg.draw_image(xcord, ycord, w, h, app.queen_white) }
-				.pawn_black { app.gg.draw_image(xcord, ycord, w, h, app.pawn_black) }
-				.bishop_black { app.gg.draw_image(xcord, ycord, w, h, app.bishop_black) }
-				.knight_black { app.gg.draw_image(xcord, ycord, w, h, app.knight_black) }
-				.rook_black { app.gg.draw_image(xcord, ycord, w, h, app.rook_black) }
-				.king_black { app.gg.draw_image(xcord, ycord, w, h, app.king_black) }
-				.queen_black { app.gg.draw_image(xcord, ycord, w, h, app.queen_black) }
-				else {}
+			if app.board.field[y][x] != .nothing && !app.is_anim_dest(y, x) {
+				app.gg.draw_image(xcord, ycord, w, h, app.piece_image(app.board.field[y][x]))
 			}
 			if x == 0 {
 				app.gg.draw_text(xcord, ycord, '${8 - y}', gg.TextCfg{
@@ -86,6 +116,21 @@ fn (app &App) draw_field() {
 		is_dark = !is_dark
 		xcord = width_unused / 2
 		ycord = if app.is_white { ycord + h } else { ycord - h }
+	}
+	now := time.now().unix_milli()
+	for a in app.anims {
+		mut t := f32(now - a.start) / f32(anim_duration_ms)
+		if t < 0 {
+			t = 0
+		}
+		if t > 1 {
+			t = 1
+		}
+		fx, fy := app.cell_screen_pos(a.from_row, a.from_col)
+		tx, ty := app.cell_screen_pos(a.to_row, a.to_col)
+		px := int(f32(fx) + (f32(tx) - f32(fx)) * t)
+		py := int(f32(fy) + (f32(ty) - f32(fy)) * t)
+		app.gg.draw_image(px, py, w, h, app.piece_image(a.kind))
 	}
 	app.draw_additional_buttons(width_unused, height_unused)
 	app.draw_final_screen(app.board.is_white_winner)
@@ -256,6 +301,10 @@ fn (app &App) draw_menu() {
 }
 
 fn frame(mut app App) {
+	if app.anims.len > 0 {
+		now := time.now().unix_milli()
+		app.anims = app.anims.filter(now - it.start < anim_duration_ms)
+	}
 	if app.engine_should_start && !app.engine_thinking {
 		app.engine_should_start = false
 		app.engine_thinking = true
