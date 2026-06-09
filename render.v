@@ -189,6 +189,33 @@ fn (app &App) draw_promotion() {
 	}
 }
 
+fn (app &App) menu_rects() []MenuRect {
+	w, h := app.ui.window_width, app.ui.window_height
+	cx := w / 2
+	bw := w / 3
+	bh := h / 14
+	gap := h / 50
+	mut y := h / 2 - bh
+	mut res := []MenuRect{}
+	res << MenuRect{.start, Rect{cx - bw / 2, y, bw, bh}}
+	y += bh + gap * 2
+	res << MenuRect{.opponent, Rect{cx - bw / 2, y, bw, bh}}
+	y += bh + gap
+	res << MenuRect{.difficulty, Rect{cx - bw / 2, y, bw, bh}}
+	y += bh + gap
+	res << MenuRect{.color, Rect{cx - bw / 2, y, bw, bh}}
+	return res
+}
+
+fn (app &App) menu_label(item MenuItem) string {
+	return match item {
+		.start { 'Start game' }
+		.opponent { if app.vs_engine { 'Opponent: Engine' } else { 'Opponent: Human' } }
+		.difficulty { 'Level: ' + difficulty_name(app.difficulty) }
+		.color { if app.is_white { 'Play: White' } else { 'Play: Black' } }
+	}
+}
+
 fn (app &App) draw_menu() {
 	w, h := app.ui.window_width, app.ui.window_height
 	app.gg.draw_image(0, 0, w, h, app.m_background)
@@ -198,29 +225,25 @@ fn (app &App) draw_menu() {
 		align: .center
 		vertical_align: .bottom
 	})
-	app.gg.draw_rounded_rect_filled(w / 2 - ((w / 4) / 2), h / 2, w / 4, h / 10, 10, app.theme.button_main_color)
-	app.gg.draw_rounded_rect_empty(w / 2 - ((w / 4) / 2), h / 2, w / 4, h / 10, 10, app.theme.button_second_color)
-	app.gg.draw_text(w / 2, h / 2 + h / 20 + app.ui.font_size / 4, 'Start game', gg.TextCfg{
-		color: gg.white
-		size: app.ui.font_size / 2
-		align: .center
-		vertical_align: .bottom
-	})
-	app.gg.draw_text(w / 2, h / 2 + h / 5, 'Play as', gg.TextCfg{
-		color: gg.white
-		size: app.ui.font_size / 2
-		align: .center
-		vertical_align: .bottom
-	})
-	app.gg.draw_rounded_rect_filled(w / 2 - w / 8, h / 2 + h / 4, w / 4, h / 12, 10, app.theme.button_main_color)
-	app.gg.draw_rounded_rect_empty(w / 2 - w / 8, h / 2 + h / 4, w / 4, h / 12, 10, app.theme.button_second_color)
-	mut choice := if app.is_white { 'white' } else { 'black' }
-	app.gg.draw_text(w / 2, h / 2 + h / 4 + app.ui.font_size / 4 + h / 24, choice, gg.TextCfg{
-		color: gg.white
-		size: app.ui.font_size / 2
-		align: .center
-		vertical_align: .bottom
-	})
+	for mr in app.menu_rects() {
+		r := mr.rect
+		app.gg.draw_rounded_rect_filled(r.x, r.y, r.w, r.h, 10, app.theme.button_main_color)
+		app.gg.draw_rounded_rect_empty(r.x, r.y, r.w, r.h, 10, app.theme.button_second_color)
+		app.gg.draw_text(r.x + r.w / 2, r.y + r.h / 2, app.menu_label(mr.item), gg.TextCfg{
+			color: gg.white
+			size: app.ui.font_size / 3
+			align: .center
+			vertical_align: .middle
+		})
+	}
+	if app.engine_error != '' {
+		app.gg.draw_text(w / 2, h - h / 12, 'Engine unavailable: ${app.engine_error}', gg.TextCfg{
+			color: gg.white
+			size: app.ui.font_size / 4
+			align: .center
+			vertical_align: .bottom
+		})
+	}
 
 	app.gg.draw_rounded_rect_filled(3, 3, w / 15, h / 15, 10, app.theme.button_main_color)
 	app.gg.draw_rounded_rect_empty(3, 3, w / 15, h / 15, 10, app.theme.button_second_color)
@@ -230,13 +253,28 @@ fn (app &App) draw_menu() {
 		align: .center
 		vertical_align: .bottom
 	})
-	/*
-	x := w / 2 - (app.ui.font_size / 2 + app.ui.font_size / 5)
-	y := h / 2 + h / 3 - app.ui.font_size / 2
-	app.gg.draw_triangle_filled(x, y, x, y + app.ui.font_size / 2, x - app.ui.font_size / 2, avg(y, y + app.ui.font_size/2), gx.white)*/
 }
 
-fn frame(app &App) {
+fn frame(mut app App) {
+	if app.engine_should_start && !app.engine_thinking {
+		app.engine_should_start = false
+		app.engine_thinking = true
+		fen := app.board.current_fen
+		spawn app.think(fen)
+	}
+	if app.engine_thinking {
+		app.engine_lock.lock()
+		has := app.engine_has_result
+		mv := app.engine_result
+		if has {
+			app.engine_has_result = false
+		}
+		app.engine_lock.unlock()
+		if has {
+			app.engine_thinking = false
+			app.apply_engine_move(mv)
+		}
+	}
 	app.gg.begin()
 	if app.state == .play || app.state == .end {
 		app.draw_field()
@@ -246,6 +284,15 @@ fn frame(app &App) {
 	}
 	if app.promoting {
 		app.draw_promotion()
+	}
+	if app.engine_thinking {
+		app.gg.draw_text(app.ui.window_width / 2, app.ui.font_size / 2, 'Engine thinking...',
+			gg.TextCfg{
+			color: gg.white
+			size: app.ui.font_size / 4
+			align: .center
+			vertical_align: .top
+		})
 	}
 	app.gg.end()
 }

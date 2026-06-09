@@ -2,6 +2,8 @@ module main
 import gg
 import board
 import saving
+import uci
+import sync
 import time
 import os
 
@@ -36,7 +38,35 @@ mut:
 	promoting    bool
 	promotion_x  int
 	promotion_y  int
-	// engine       	engine.Engine
+	vs_engine           bool
+	difficulty          int
+	engine_path         string
+	engine              &uci.Engine = unsafe { nil }
+	engine_thinking     bool
+	engine_should_start bool
+	engine_lock         &sync.Mutex = unsafe { nil }
+	engine_result       string
+	engine_has_result   bool
+	engine_error        string
+}
+
+struct Rect {
+	x int
+	y int
+	w int
+	h int
+}
+
+pub enum MenuItem {
+	start
+	opponent
+	difficulty
+	color
+}
+
+struct MenuRect {
+	item MenuItem
+	rect Rect
 }
 
 struct Ui {

@@ -3,7 +3,26 @@ Chess game written in V programming language(in development)
 Thank you for your stars
 
 ## Disclaimer ⚠️
-**The game is unfinished and unplayable now**
+**Still in active development, but the full ruleset and play against a UCI engine now work.**
+
+### Play against an engine ♟️
+
+VChess talks to any UCI engine (Stockfish, etc.). In the main menu switch
+**Opponent** to `Engine` and pick a **Level** (Easy / Medium / Hard / Max),
+then start the game.
+
+Engine resolution order:
+1. `--uci <path>` command line flag
+2. `assets/engine/stockfish` next to the executable (drop your own binary here to bundle one)
+3. `stockfish` found in the system `PATH`
+
+```bash
+./vchess --uci /usr/bin/stockfish
+```
+
+The engine binary is intentionally not committed to the repo (Stockfish is ~76 MB
+and platform specific). Install it from your package manager, or place a binary in
+`assets/engine/stockfish`.
 
 ### Build🔨
 
@@ -81,7 +100,7 @@ ls -l /dev/dri
 - ● Icon sets switching         ❌
 - ● Animations                  ❌
 - ● Rules                       ✅
-- ● Stockfish integration & UCI 🕗
+- ● Stockfish integration & UCI ✅
 - ● Bluetooth multiplayer       ❌
 - ● USB Support                 ❌
 - ● E-Board support             ❌

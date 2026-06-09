@@ -9,7 +9,8 @@ import figure
 import board
 import cords
 import saving
-///import engine
+import uci
+import sync
 
 fn (mut app App) new_game(to_menu bool) {
 	app.board = board.Board{}
@@ -258,7 +259,171 @@ fn (mut app App) finish_move() {
 		} else {
 			app.board.is_draw = true
 		}
+		return
 	}
+	if app.is_engine_turn() {
+		app.engine_should_start = true
+	}
+}
+
+fn (app &App) is_engine_turn() bool {
+	return app.vs_engine && app.state == .play && app.board.is_white_move != app.is_white
+}
+
+fn difficulty_params(d int) (int, int) {
+	return match d {
+		0 { 1, 100 }
+		1 { 5, 300 }
+		2 { 12, 700 }
+		else { 20, 1500 }
+	}
+}
+
+fn difficulty_name(d int) string {
+	return match d {
+		0 { 'Easy' }
+		1 { 'Medium' }
+		2 { 'Hard' }
+		else { 'Max' }
+	}
+}
+
+fn resolve_engine_path(engine_override string) string {
+	if engine_override != '' {
+		return engine_override
+	}
+	bundled := os.resource_abs_path('assets/engine/stockfish')
+	if os.exists(bundled) {
+		return bundled
+	}
+	return os.find_abs_path_of_executable('stockfish') or { 'stockfish' }
+}
+
+fn (mut app App) ensure_engine() ! {
+	if app.engine != unsafe { nil } {
+		return
+	}
+	app.engine = uci.new_engine(app.engine_path)!
+	app.engine_error = ''
+}
+
+fn (mut app App) start_game() {
+	if app.vs_engine {
+		app.ensure_engine() or {
+			app.engine_error = err.msg()
+			app.vs_engine = false
+		}
+	}
+	app.state = .play
+	app.board.current_fen = fen_utils.board_2_fen(app.board)
+	if app.is_engine_turn() {
+		app.engine_should_start = true
+	}
+}
+
+fn (mut app App) think(fen string) {
+	mut mv := ''
+	if app.engine != unsafe { nil } {
+		skill, mt := difficulty_params(app.difficulty)
+		app.engine.set_skill(skill)
+		mv = app.engine.best_move(fen, mt) or { '' }
+	}
+	app.engine_lock.lock()
+	app.engine_result = mv
+	app.engine_has_result = true
+	app.engine_lock.unlock()
+}
+
+fn (mut app App) apply_engine_move(mv string) {
+	if mv.len < 4 {
+		return
+	}
+	oldcord := cords.chessboard2xy(mv[0..2])
+	target := cords.chessboard2xy(mv[2..4])
+	mut promo := -1
+	if mv.len >= 5 {
+		promo = match mv[4] {
+			`r` { 3 }
+			`b` { 1 }
+			`n` { 2 }
+			else { 4 }
+		}
+	}
+	app.make_move(oldcord, target[0], target[1], promo)
+}
+
+fn (mut app App) make_move(oldcord []int, tilex int, tiley int, promo int) {
+	app.undo << fen_utils.board_2_fen(app.board)
+	piece := app.board.field[oldcord[0]][oldcord[1]]
+	piecedx := if app.board.is_white_move { tilex + 1 } else { tilex - 1 }
+	if is_valid([piecedx, tiley]) {
+		pieced := app.board.field[piecedx][tiley]
+		if app.board.last_en_passant != '-' {
+			if piece.is_pawn() && pieced.is_pawn() && pieced.is_enemy(piece)
+				&& cords.en_passant2xy(app.board.last_en_passant, app.board.is_white_move).reverse() == [piecedx, tiley] {
+				app.board.kill(piecedx, tiley)
+			}
+		}
+		if piece.is_pawn() && math.abs(oldcord[0] - tilex) > 1 {
+			app.board.last_en_passant = cords.xy2chessboard(piecedx, tiley)
+		} else {
+			app.board.last_en_passant = '-'
+		}
+	} else {
+		app.board.last_en_passant = '-'
+	}
+	if piece.is_king() {
+		if piece.is_white() {
+			app.board.white_short_castle_allowed = false
+			app.board.white_long_castle_allowed = false
+		} else {
+			app.board.black_short_castle_allowed = false
+			app.board.black_long_castle_allowed = false
+		}
+		if oldcord == [7, 4] && [tilex, tiley] == [7, 2] {
+			app.board.swap(7, 0, 7, 3)
+		}
+		if oldcord == [0, 4] && [tilex, tiley] == [0, 2] {
+			app.board.swap(0, 0, 0, 3)
+		}
+		if oldcord == [7, 4] && [tilex, tiley] == [7, 6] {
+			app.board.swap(7, 7, 7, 5)
+		}
+		if oldcord == [0, 4] && [tilex, tiley] == [0, 6] {
+			app.board.swap(0, 7, 0, 5)
+		}
+	}
+	if piece.is_rook() {
+		if piece.is_white() {
+			if oldcord[0] == 7 && oldcord[1] == 7 {
+				app.board.white_short_castle_allowed = false
+			}
+			if oldcord[0] == 7 && oldcord[1] == 0 {
+				app.board.white_long_castle_allowed = false
+			}
+		} else {
+			if oldcord[0] == 0 && oldcord[1] == 7 {
+				app.board.black_short_castle_allowed = false
+			}
+			if oldcord[0] == 0 && oldcord[1] == 0 {
+				app.board.black_long_castle_allowed = false
+			}
+		}
+	}
+	app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
+	app.current_tile = '-'
+	app.board.highlighted_tiles.clear()
+	if piece.is_pawn() && (tilex == 0 || tilex == 7) {
+		if promo >= 0 {
+			app.board.field[tilex][tiley].promote(promo)
+		} else {
+			app.promoting = true
+			app.promotion_x = tilex
+			app.promotion_y = tiley
+			return
+		}
+	}
+	app.finish_move()
 }
 
 fn (mut app App) handle_promotion_tap(avgx int, avgy int) {
@@ -301,6 +466,10 @@ fn (mut app App) handle_tap_play() {
 	tiley := (avgx - width_unused / 2) / ht
 	app.check_additional_touches(width_unused, height_unused, avgx, avgy)
 
+	if app.engine_thinking || (app.vs_engine && app.board.is_white_move != app.is_white) {
+		return
+	}
+
 	if tilex > 7 || tiley > 7 || tilex < 0 || tiley < 0 {
 		return
 	}
@@ -341,81 +510,7 @@ fn (mut app App) handle_tap_play() {
 			return
 		}
 		if [tilex, tiley] in allowed {
-			app.undo << fen_utils.board_2_fen(app.board)
-			piece := app.board.field[oldcord[0]][oldcord[1]]
-			piecedx := if app.board.is_white_move { tilex + 1 } else { tilex - 1 }
-			if is_valid([piecedx, tiley]) {
-				pieced := app.board.field[piecedx][tiley]
-				if app.board.last_en_passant != '-' {
-					if piece.is_pawn() && pieced.is_pawn() && pieced.is_enemy(piece)
-						&& cords.en_passant2xy(app.board.last_en_passant, app.board.is_white_move).reverse() == [piecedx, tiley] {
-						app.board.kill(piecedx, tiley)
-					}
-				}
-				if piece.is_pawn() && math.abs(oldcord[0] - tilex) > 1 {
-					app.board.last_en_passant = cords.xy2chessboard(piecedx, tiley)
-				} else {
-					app.board.last_en_passant = '-'
-				}
-			}
-			if piece.is_king() {
-				if piece.is_white() {
-					app.board.white_short_castle_allowed = false
-					app.board.white_long_castle_allowed = false
-				} else {
-					app.board.black_short_castle_allowed = false
-					app.board.black_long_castle_allowed = false
-				}
-
-				if oldcord == [7, 4] && [tilex, tiley] == [7, 2] {
-					app.board.swap(7, 0, 7, 3)
-					app.board.white_long_castle_allowed = false
-					app.board.white_short_castle_allowed = false
-				}
-				if oldcord == [0, 4] && [tilex, tiley] == [0, 2] {
-					app.board.swap(0, 0, 0, 3)
-					app.board.black_long_castle_allowed = false
-					app.board.black_short_castle_allowed = false
-				}
-				if oldcord == [7, 4] && [tilex, tiley] == [7, 6] {
-					app.board.swap(7, 7, 7, 5)
-					app.board.white_short_castle_allowed = false
-					app.board.white_long_castle_allowed = false
-				}
-				if oldcord == [0, 4] && [tilex, tiley] == [0, 6] {
-					app.board.swap(0, 7, 0, 5)
-					app.board.black_short_castle_allowed = false
-					app.board.black_long_castle_allowed = false
-				}
-			}
-			if piece.is_rook() {
-				if piece.is_white() {
-					if oldcord[0] == 7 && oldcord[1] == 7 {
-						app.board.white_short_castle_allowed = false
-					}
-					if oldcord[0] == 7 && oldcord[1] == 0 {
-						app.board.white_long_castle_allowed = false
-					}
-				} else {
-					if oldcord[0] == 0 && oldcord[1] == 7 {
-						app.board.black_short_castle_allowed = false
-					}
-					if oldcord[0] == 0 && oldcord[1] == 0 {
-						app.board.black_long_castle_allowed = false
-					}
-				}
-			}
-			app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
-			app.current_tile = '-'
-			app.board.highlighted_tiles.clear()
-
-			if piece.is_pawn() && (tilex == 0 || tilex == 7) {
-				app.promoting = true
-				app.promotion_x = tilex
-				app.promotion_y = tiley
-				return
-			}
-			app.finish_move()
+			app.make_move(oldcord, tilex, tiley, -1)
 		}
 	}
 }
@@ -523,17 +618,24 @@ fn (mut app App) check_additional_touches(width_unused int, height_unused int, a
 }
 
 fn (mut app App) handle_tap_menu() {
-	mut w, mut h := app.ui.window_width, app.ui.window_height
+	w, h := app.ui.window_width, app.ui.window_height
 	s, e := app.touch.start, app.touch.end
 	avgx, avgy := avg(s.pos.x, e.pos.x), avg(s.pos.y, e.pos.y)
-	if avgx > (w / 2 - ((w / 4) / 2)) && avgx < (w / 2 + ((w / 4) / 2)) && avgy > h / 2
-		&& avgy < (h / 2) + (h / 10) {
-		app.state = .play
-	} else if avgx > (w / 2 - w / 8) && avgx < (w / 2 - w / 8) + (w / 4) && avgy > (h / 2 + h / 4)
-		&& avgy < ((h / 2 + h / 4) + h / 12) {
-		app.is_white = !app.is_white
-	} else if avgx > 3 && avgx < 3 + w / 15 && avgy > 3 && avgy < 3 + h / 15 {
+	if avgx > 3 && avgx < 3 + w / 15 && avgy > 3 && avgy < 3 + h / 15 {
 		app.next_theme()
+		return
+	}
+	for mr in app.menu_rects() {
+		r := mr.rect
+		if avgx >= r.x && avgx <= r.x + r.w && avgy >= r.y && avgy <= r.y + r.h {
+			match mr.item {
+				.start { app.start_game() }
+				.opponent { app.vs_engine = !app.vs_engine }
+				.difficulty { app.difficulty = (app.difficulty + 1) % 4 }
+				.color { app.is_white = !app.is_white }
+			}
+			return
+		}
 	}
 }
 
@@ -556,11 +658,18 @@ fn main() {
 			eprintln('vchess: note: software rendering active (LIBGL_ALWAYS_SOFTWARE=1 is set)')
 		}
 	}
+	mut engine_override := ''
+	for i in 0 .. os.args.len {
+		if os.args[i] == '--uci' && i + 1 < os.args.len {
+			engine_override = os.args[i + 1]
+		}
+	}
 	curves_quality := 4
 	mut app := &App{}
+	app.engine_lock = sync.new_mutex()
+	app.engine_path = resolve_engine_path(engine_override)
 	app.new_game(true)
 	app.saver.load_save(mut app.board)
-	// fen_utils.fen_2_board(mut app.board, '4k3/8/8/1r6/8/8/8/R3K2R w KQ - 0 1')
 	font_path := $if android {
 		'fonts/RobotoMono-Regular.ttf'
 	} $else {
@@ -578,7 +687,14 @@ fn main() {
 		event_fn: on_event
 		frame_fn: frame
 		init_fn: init_images
+		cleanup_fn: cleanup
 		fullscreen: $if android { true } $else { false }
 	)
 	app.gg.run()
+}
+
+fn cleanup(mut app App) {
+	if app.engine != unsafe { nil } {
+		app.engine.quit()
+	}
 }

@@ -23,3 +23,6 @@ bin/
 *.db
 *.js
 vchess
+
+# Bundled engine binary (provide your own)
+assets/engine/stockfish
