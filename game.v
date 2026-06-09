@@ -266,6 +266,7 @@ fn (mut app App) finish_move() {
 	app.saver.writen2save(app.board.current_fen)
 	if !app.board.has_legal_moves(app.board.is_white_move) {
 		app.state = .end
+		app.end_time = time.now().unix_milli()
 		if app.board.is_king_attacked(app.board.is_white_move) {
 			app.board.is_white_winner = !app.board.is_white_move
 		} else {

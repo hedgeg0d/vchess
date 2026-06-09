@@ -50,6 +50,7 @@ mut:
 	engine_has_result   bool
 	engine_error        string
 	anims               []Anim
+	end_time            i64
 }
 
 struct Anim {

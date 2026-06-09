@@ -175,41 +175,84 @@ fn (app &App) draw_final_screen(is_white_victory bool) {
 	if app.state != .end {
 		return
 	}
-	y := app.ui.window_height / 3
-	paddingy := app.ui.window_height / 15
-	app.gg.draw_rect_filled(0, 0, app.ui.window_width, app.ui.window_height, gg.rgba(0,
-		0, 0, 200))
-	app.gg.draw_text(app.ui.window_width / 2, y, 'Game finished', gg.TextCfg{
+	w, h := app.ui.window_width, app.ui.window_height
+	now := time.now().unix_milli()
+	mut p := f32(now - app.end_time) / 320.0
+	if p < 0 {
+		p = 0
+	}
+	if p > 1 {
+		p = 1
+	}
+	ease := 1.0 - (1.0 - p) * (1.0 - p)
+
+	app.gg.draw_rect_filled(0, 0, w, h, gg.rgba(0, 0, 0, u8(190 * ease)))
+
+	short := math.min(w, h)
+	pw := int(f32(short) * 0.66)
+	ph := int(f32(short) * 0.6)
+	px := (w - pw) / 2
+	slide := int((1.0 - ease) * f32(short) / 8)
+	py := (h - ph) / 2 + slide
+
+	accent := if app.board.is_draw {
+		app.theme.button_second_color
+	} else if is_white_victory {
+		gg.rgb(235, 235, 235)
+	} else {
+		gg.rgb(40, 40, 40)
+	}
+	app.gg.draw_rounded_rect_filled(px - 5, py - 5, pw + 10, ph + 10, 22, accent)
+	app.gg.draw_rounded_rect_filled(px, py, pw, ph, 18, app.theme.button_main_color)
+	app.gg.draw_rounded_rect_empty(px, py, pw, ph, 18, app.theme.button_second_color)
+
+	icon := ph / 3
+	icon_x := px + pw / 2 - icon / 2
+	icon_y := py + ph / 12
+	if app.board.is_draw {
+		gap := icon / 6
+		app.gg.draw_image(icon_x - icon / 2 - gap / 2, icon_y, icon, icon, app.king_white)
+		app.gg.draw_image(icon_x + icon / 2 + gap / 2, icon_y, icon, icon, app.king_black)
+	} else {
+		king := if is_white_victory { app.king_white } else { app.king_black }
+		app.gg.draw_image(icon_x, icon_y, icon, icon, king)
+	}
+
+	title := if app.board.is_draw { 'Stalemate' } else { 'Checkmate!' }
+	app.gg.draw_text(w / 2, icon_y + icon + ph / 12, title, gg.TextCfg{
 		color: gg.white
 		size: app.ui.font_size / 2
 		align: .center
-		vertical_align: .bottom
+		vertical_align: .top
 	})
-	result_text := if app.board.is_draw {
-		'Stalemate - Draw'
+
+	subtitle := if app.board.is_draw {
+		'It\'s a draw'
 	} else {
 		victor := if is_white_victory { 'White' } else { 'Black' }
-		'${victor} won'
+		'${victor} wins'
 	}
-	app.gg.draw_text(app.ui.window_width / 2, y + paddingy, result_text, gg.TextCfg{
-		color: gg.white
-		size: app.ui.font_size / 3
-		align: .center
-		vertical_align: .bottom
-	})
-	app.gg.draw_text(app.ui.window_width / 2, (y + paddingy) * 2, 'Moves done: ${app.board.fullmove_number}',
+	app.gg.draw_text(w / 2, icon_y + icon + ph / 12 + app.ui.font_size / 2 + ph / 20, subtitle,
 		gg.TextCfg{
-		color: gg.white
+		color: accent
 		size: app.ui.font_size / 3
 		align: .center
-		vertical_align: .bottom
+		vertical_align: .top
 	})
-	app.gg.draw_text(app.ui.window_width / 2, y + paddingy * 10, 'Press any button to continue',
-		gg.TextCfg{
+
+	app.gg.draw_text(w / 2, py + ph - ph / 4, 'Moves: ${app.board.fullmove_number}', gg.TextCfg{
 		color: gg.white
-		size: app.ui.font_size / 3
+		size: app.ui.font_size / 4
 		align: .center
-		vertical_align: .bottom
+		vertical_align: .top
+	})
+
+	pulse := u8(140.0 + 115.0 * (0.5 + 0.5 * math.sinf(f32(now) / 280.0)))
+	app.gg.draw_text(w / 2, py + ph - ph / 12, 'Press any key to continue', gg.TextCfg{
+		color: gg.rgba(255, 255, 255, pulse)
+		size: app.ui.font_size / 5
+		align: .center
+		vertical_align: .top
 	})
 }
 
