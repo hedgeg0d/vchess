@@ -18,6 +18,7 @@ pub mut:
 	highlighted_tiles          []string
 	is_first_move              bool
 	is_white_winner            bool = true
+	is_draw                    bool
 }
 
 pub fn (mut xboard Board) clear() {
@@ -143,7 +144,7 @@ pub fn (mut xboard Board) allowed_moves(x int, y int) []string {
 				}
 			}
 		} else {
-			if is_valid([x - 1, y]) && xboard.field[x + 1][y] == .nothing {
+			if is_valid([x + 1, y]) && xboard.field[x + 1][y] == .nothing {
 				results << [[x + 1, y]]
 			}
 			if is_valid([x + 1, y]) && is_valid([x + 2, y])
@@ -169,7 +170,6 @@ pub fn (mut xboard Board) allowed_moves(x int, y int) []string {
 			}
 		}
 	} else if field.is_knight() {
-		println(y)
 		if !(field.is_black() && x == 0) {
 			results << [[x - 2, y + 1]]
 			results << [[x - 2, y - 1]]
@@ -440,4 +440,57 @@ pub fn (mut xboard Board) allowed_moves(x int, y int) []string {
 		}
 	}
 	return final
+}
+
+pub fn (mut xboard Board) is_king_attacked(is_white bool) bool {
+	king := xboard.get_kings_cords(is_white)
+	old := xboard.is_white_move
+	xboard.is_white_move = is_white
+	reachable := xboard.get_reachable_fields(false)
+	xboard.is_white_move = old
+	return king in reachable
+}
+
+pub fn (mut xboard Board) legal_moves(x int, y int) []string {
+	pseudo := xboard.allowed_moves(x, y)
+	piece := xboard.field[x][y]
+	mut result := []string{}
+	for mv in pseudo {
+		pos := cords.chessboard2xy(mv)
+		tx, ty := pos[0], pos[1]
+		mut b := xboard
+		b.field[tx][ty] = b.field[x][y]
+		b.field[x][y] = .nothing
+		if piece.is_pawn() && y != ty && xboard.field[tx][ty] == .nothing {
+			b.field[x][ty] = .nothing
+		}
+		if piece.is_king() {
+			diff := ty - y
+			if diff == 2 {
+				b.field[tx][ty - 1] = b.field[tx][ty + 1]
+				b.field[tx][ty + 1] = .nothing
+			} else if diff == -2 {
+				b.field[tx][ty + 1] = b.field[tx][ty - 2]
+				b.field[tx][ty - 2] = .nothing
+			}
+		}
+		if !b.is_king_attacked(piece.is_white()) {
+			result << mv
+		}
+	}
+	return result
+}
+
+pub fn (mut xboard Board) has_legal_moves(is_white bool) bool {
+	for y in 0 .. 8 {
+		for x in 0 .. 8 {
+			piece := xboard.field[y][x]
+			if piece != .nothing && piece.is_white() == is_white {
+				if xboard.legal_moves(y, x).len > 0 {
+					return true
+				}
+			}
+		}
+	}
+	return false
 }

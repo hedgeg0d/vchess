@@ -140,8 +140,13 @@ fn (app &App) draw_final_screen(is_white_victory bool) {
 		align: .center
 		vertical_align: .bottom
 	})
-	victor := if is_white_victory { 'White' } else { 'Black' }
-	app.gg.draw_text(app.ui.window_width / 2, y + paddingy, '${victor} won', gg.TextCfg{
+	result_text := if app.board.is_draw {
+		'Stalemate - Draw'
+	} else {
+		victor := if is_white_victory { 'White' } else { 'Black' }
+		'${victor} won'
+	}
+	app.gg.draw_text(app.ui.window_width / 2, y + paddingy, result_text, gg.TextCfg{
 		color: gg.white
 		size: app.ui.font_size / 3
 		align: .center
@@ -161,6 +166,27 @@ fn (app &App) draw_final_screen(is_white_victory bool) {
 		align: .center
 		vertical_align: .bottom
 	})
+}
+
+fn (app &App) draw_promotion() {
+	w := int(math.min(app.ui.window_width, app.ui.window_height)) / 4
+	cx := app.ui.window_width / 2
+	cy := app.ui.window_height / 2
+	x0 := cx - 2 * w
+	y0 := cy - w / 2
+	app.gg.draw_rect_filled(0, 0, app.ui.window_width, app.ui.window_height, gg.rgba(0,
+		0, 0, 150))
+	app.gg.draw_rect_filled(x0, y0, 4 * w, w, app.theme.button_main_color)
+	app.gg.draw_rounded_rect_empty(x0, y0, 4 * w, w, 5, app.theme.button_second_color)
+	is_white := app.board.field[app.promotion_x][app.promotion_y].is_white()
+	imgs := if is_white {
+		[app.queen_white, app.rook_white, app.bishop_white, app.knight_white]
+	} else {
+		[app.queen_black, app.rook_black, app.bishop_black, app.knight_black]
+	}
+	for i, img in imgs {
+		app.gg.draw_image(x0 + i * w, y0, w, w, img)
+	}
 }
 
 fn (app &App) draw_menu() {
@@ -217,6 +243,9 @@ fn frame(app &App) {
 	}
 	if app.state == .menu {
 		app.draw_menu()
+	}
+	if app.promoting {
+		app.draw_promotion()
 	}
 	app.gg.end()
 }

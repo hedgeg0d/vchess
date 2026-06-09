@@ -80,7 +80,7 @@ ls -l /dev/dri
 - ● PGN support                 ❌
 - ● Icon sets switching         ❌
 - ● Animations                  ❌
-- ● Rules                       🕗
+- ● Rules                       ✅
 - ● Stockfish integration & UCI 🕗
 - ● Bluetooth multiplayer       ❌
 - ● USB Support                 ❌

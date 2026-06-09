@@ -33,6 +33,9 @@ mut:
 	is_white     bool
 	theme_index  u8
 	theme        &Theme = themes[0]
+	promoting    bool
+	promotion_x  int
+	promotion_y  int
 	// engine       	engine.Engine
 }
 

@@ -73,17 +73,19 @@ fn (mut app App) new_game(to_menu bool) {
 	}
 	app.undo = []string{cap: 8192}
 	app.moves = 0
+	app.promoting = false
 }
 
 @[inline]
 pub fn (mut app App) undo_move() {
+	app.promoting = false
 	if app.undo.len < 1 {
 		return
 	}
 	fen_utils.fen_2_board(mut app.board, app.undo.last())
 	app.undo.delete_last()
 	app.current_tile = '-'
-	app.board.fullmove_number--
+	app.board.highlighted_tiles.clear()
 }
 
 @[inline]
@@ -242,11 +244,54 @@ fn (mut app App) handle_touches() {
 	}
 }
 
+fn (mut app App) finish_move() {
+	if !app.board.is_white_move {
+		app.board.fullmove_number++
+	}
+	app.board.is_white_move = !app.board.is_white_move
+	app.board.current_fen = fen_utils.board_2_fen(app.board)
+	app.saver.writen2save(app.board.current_fen)
+	if !app.board.has_legal_moves(app.board.is_white_move) {
+		app.state = .end
+		if app.board.is_king_attacked(app.board.is_white_move) {
+			app.board.is_white_winner = !app.board.is_white_move
+		} else {
+			app.board.is_draw = true
+		}
+	}
+}
+
+fn (mut app App) handle_promotion_tap(avgx int, avgy int) {
+	w := int(math.min(app.ui.window_width, app.ui.window_height)) / 4
+	cx := app.ui.window_width / 2
+	cy := app.ui.window_height / 2
+	x0 := cx - 2 * w
+	y0 := cy - w / 2
+	if avgx < x0 || avgx > x0 + 4 * w || avgy < y0 || avgy > y0 + w {
+		return
+	}
+	idx := (avgx - x0) / w
+	choice := match idx {
+		0 { 4 }
+		1 { 3 }
+		2 { 1 }
+		3 { 2 }
+		else { 4 }
+	}
+	app.board.field[app.promotion_x][app.promotion_y].promote(choice)
+	app.promoting = false
+	app.finish_move()
+}
+
 fn (mut app App) handle_tap_play() {
 	mut w, mut h := app.ui.window_width, app.ui.window_height
 	wt, ht := math.min(w / 8, h / 8), math.min(w / 8, h / 8)
 	s, e := app.touch.start, app.touch.end
 	avgx, avgy := avg(s.pos.x, e.pos.x), avg(s.pos.y, e.pos.y)
+	if app.promoting {
+		app.handle_promotion_tap(avgx, avgy)
+		return
+	}
 	width_unused, height_unused := app.ui.window_width - wt * 8, app.ui.window_height - ht * 8
 	tilex := if app.is_white {
 		(avgy - height_unused / 2) / wt
@@ -255,7 +300,6 @@ fn (mut app App) handle_tap_play() {
 	}
 	tiley := (avgx - width_unused / 2) / ht
 	app.check_additional_touches(width_unused, height_unused, avgx, avgy)
-	// mut ycord := if app.is_white {height_unused / 2} else {app.ui.window_height - height_unused / 2 - h}
 
 	if tilex > 7 || tiley > 7 || tilex < 0 || tiley < 0 {
 		return
@@ -274,7 +318,7 @@ fn (mut app App) handle_tap_play() {
 		if app.board.field[tilex][tiley] != .nothing {
 			if app.board.is_white_move == app.board.field[tilex][tiley].is_white() {
 				app.current_tile = cords.xy2chessboard(tilex, tiley)
-				app.board.highlighted_tiles << app.board.allowed_moves(tilex, tiley)
+				app.board.highlighted_tiles << app.board.legal_moves(tilex, tiley)
 			}
 		}
 	} else {
@@ -283,7 +327,7 @@ fn (mut app App) handle_tap_play() {
 				&& !(app.board.field[tilex][tiley].is_enemy(app.board.field[cords.chessboard2xy(app.current_tile)[0]][cords.chessboard2xy(app.current_tile)[1]])) {
 				app.current_tile = cords.xy2chessboard(tilex, tiley)
 				app.board.highlighted_tiles.clear()
-				app.board.highlighted_tiles << app.board.allowed_moves(tilex, tiley)
+				app.board.highlighted_tiles << app.board.legal_moves(tilex, tiley)
 			} else {
 				app.current_tile = '-'
 				app.board.highlighted_tiles.clear()
@@ -300,10 +344,6 @@ fn (mut app App) handle_tap_play() {
 			app.undo << fen_utils.board_2_fen(app.board)
 			piece := app.board.field[oldcord[0]][oldcord[1]]
 			piecedx := if app.board.is_white_move { tilex + 1 } else { tilex - 1 }
-			if piece.is_king() {
-				app.state = .end
-				app.board.is_white_winner = piece.is_white()
-			}
 			if is_valid([piecedx, tiley]) {
 				pieced := app.board.field[piecedx][tiley]
 				if app.board.last_en_passant != '-' {
@@ -366,18 +406,16 @@ fn (mut app App) handle_tap_play() {
 				}
 			}
 			app.board.swap(oldcord[0], oldcord[1], tilex, tiley)
-			if piece.is_pawn() && (tilex == 0 || tilex == 7) {
-				app.board.field[tilex][tiley].promote(4)
-			}
 			app.current_tile = '-'
-			if !app.board.is_white_move {
-				app.board.fullmove_number++
-			}
-			app.board.is_white_move = !app.board.is_white_move
-			app.board.current_fen = fen_utils.board_2_fen(app.board)
 			app.board.highlighted_tiles.clear()
 
-			app.saver.writen2save(app.board.current_fen)
+			if piece.is_pawn() && (tilex == 0 || tilex == 7) {
+				app.promoting = true
+				app.promotion_x = tilex
+				app.promotion_y = tiley
+				return
+			}
+			app.finish_move()
 		}
 	}
 }
