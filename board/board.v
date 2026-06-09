@@ -454,29 +454,30 @@ pub fn (mut xboard Board) is_king_attacked(is_white bool) bool {
 pub fn (mut xboard Board) legal_moves(x int, y int) []string {
 	pseudo := xboard.allowed_moves(x, y)
 	piece := xboard.field[x][y]
+	saved := xboard.field
 	mut result := []string{}
 	for mv in pseudo {
 		pos := cords.chessboard2xy(mv)
 		tx, ty := pos[0], pos[1]
-		mut b := xboard
-		b.field[tx][ty] = b.field[x][y]
-		b.field[x][y] = .nothing
-		if piece.is_pawn() && y != ty && xboard.field[tx][ty] == .nothing {
-			b.field[x][ty] = .nothing
+		xboard.field[tx][ty] = xboard.field[x][y]
+		xboard.field[x][y] = .nothing
+		if piece.is_pawn() && y != ty && saved[tx][ty] == .nothing {
+			xboard.field[x][ty] = .nothing
 		}
 		if piece.is_king() {
 			diff := ty - y
 			if diff == 2 {
-				b.field[tx][ty - 1] = b.field[tx][ty + 1]
-				b.field[tx][ty + 1] = .nothing
+				xboard.field[tx][ty - 1] = xboard.field[tx][ty + 1]
+				xboard.field[tx][ty + 1] = .nothing
 			} else if diff == -2 {
-				b.field[tx][ty + 1] = b.field[tx][ty - 2]
-				b.field[tx][ty - 2] = .nothing
+				xboard.field[tx][ty + 1] = xboard.field[tx][ty - 2]
+				xboard.field[tx][ty - 2] = .nothing
 			}
 		}
-		if !b.is_king_attacked(piece.is_white()) {
+		if !xboard.is_king_attacked(piece.is_white()) {
 			result << mv
 		}
+		xboard.field = saved
 	}
 	return result
 }
