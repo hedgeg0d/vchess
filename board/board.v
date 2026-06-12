@@ -1,4 +1,4 @@
-module xboard
+module board
 
 import figure
 import cords

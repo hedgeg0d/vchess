@@ -109,7 +109,7 @@ fn (mut app App) set_theme(idx int) {
 	app.gg.set_bg_color(theme.background_color)
 	$if android {
 		new_bg := os.read_apk_asset(app.theme.path2background_android) or { panic(err) }
-		app.m_background = app.gg.create_image_from_byte_array(new_bg)
+		app.m_background = app.gg.create_image_from_byte_array(new_bg) or { panic(err) }
 	} $else {
 		app.m_background = app.gg.create_image(os.resource_abs_path(app.theme.path2background)) or {
 			panic(err)
@@ -305,28 +305,29 @@ fn resolve_engine_path(engine_override string) string {
 	if engine_override != '' {
 		return engine_override
 	}
-	bundled := os.resource_abs_path('assets/engine/stockfish')
-	if os.exists(bundled) {
-		return bundled
+	$if !android {
+		bundled := os.resource_abs_path('assets/engine/stockfish')
+		if os.exists(bundled) {
+			return bundled
+		}
+		return os.find_abs_path_of_executable('stockfish') or { 'stockfish' }
 	}
-	return os.find_abs_path_of_executable('stockfish') or { 'stockfish' }
+	return ''
 }
 
 fn (mut app App) ensure_engine() ! {
 	if app.engine != unsafe { nil } {
 		return
 	}
-	app.engine = uci.new_engine(app.engine_path)!
+	if app.engine_path != '' {
+		app.engine = uci.new_engine_ext(app.engine_path)!
+	} else {
+		app.engine = uci.new_engine()!
+	}
 	app.engine_error = ''
 }
 
 fn (mut app App) start_game() {
-	if app.vs_engine {
-		app.ensure_engine() or {
-			app.engine_error = err.msg()
-			app.vs_engine = false
-		}
-	}
 	app.state = .play
 	app.board.current_fen = fen_utils.board_2_fen(app.board)
 	if app.is_engine_turn() {
@@ -335,11 +336,21 @@ fn (mut app App) start_game() {
 }
 
 fn (mut app App) think(fen string) {
-	mut mv := ''
-	if app.engine != unsafe { nil } {
-		skill, mt := difficulty_params(app.difficulty)
-		app.engine.set_skill(skill)
-		mv = app.engine.best_move(fen, mt) or { '' }
+	if app.engine == unsafe { nil } {
+		app.ensure_engine() or {
+			eprintln('engine init error: ' + err.msg())
+			app.engine_lock.lock()
+			app.engine_error = err.msg()
+			app.engine_has_result = true
+			app.engine_lock.unlock()
+			return
+		}
+	}
+	skill, mt := difficulty_params(app.difficulty)
+	app.engine.set_skill(skill)
+	mv := app.engine.best_move(fen, mt) or {
+		eprintln('best_move error: ' + err.msg())
+		''
 	}
 	app.engine_lock.lock()
 	app.engine_result = mv
@@ -660,7 +671,12 @@ fn (mut app App) handle_tap_menu() {
 
 fn main() {
 	$if android {
-		os.chdir('/storage/emulated/0/Android/data/com.hedgegod.chessgame')!
+		// use app's internal data directory (no permissions needed)
+		// os.data_dir() relies on HOME, which is not set in waydroid,
+		// so use the canonical Android app data path instead.
+		data_dir := '/data/data/com.hedgegod.chessgame/files'
+		os.mkdir_all(data_dir) or {}
+		os.chdir(data_dir) or {}
 	}
 	// On Linux, sokol/EGL can fail to find any EGL configs when GPU drivers are
 	// unavailable or misconfigured (LINUX_EGL_NO_CONFIGS).  Passing --software or

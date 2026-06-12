@@ -26,3 +26,12 @@ vchess
 
 # Bundled engine binary (provide your own)
 assets/engine/stockfish
+
+# Android / desktop build artifacts
+*.apk
+*.apk.idsig
+vchess_linux_x64
+SAVEFILE
+
+# Embedded Stockfish static lib (built out-of-tree, see BUILD_ANDROID.md)
+lib/*.a
